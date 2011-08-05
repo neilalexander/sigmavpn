@@ -26,8 +26,16 @@ int main(int argc, const char** argv)
 		loadinterface("udp")
 	};
 	
-	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
-	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
+	char publickey[64];
+	char privatekey[64];
+	
+	hex2bin(publickey, getenv("PUBLIC_KEY"), 64);
+	hex2bin(privatekey, getenv("PRIVATE_KEY"), 64);
+	
+	printf("%s %s\n", publickey, privatekey);
+	
+	session.proto->set(session.proto, "publickey", publickey);
+	session.proto->set(session.proto, "privatekey", privatekey);
 	session.proto->init(session.proto);
 	
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));

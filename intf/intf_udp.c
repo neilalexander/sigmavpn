@@ -45,7 +45,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 	
 	int ret;
 	
-	//printf("Sending packet of %li bytes\n", len);
+	printf("Sending packet of %li bytes\n", len);
 
 	#ifdef IPV6
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in6));
@@ -53,7 +53,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in));
 	#endif
 	
-	//printf("Sent %i bytes\n", ret);
+	printf("Sent %i bytes\n", ret);
 	
 	return ret;
 }
@@ -69,6 +69,8 @@ static long intf_read(sigma_intf *instance, char* output, long len)
 	}
 	
 	len = recv(udp->baseintf.filedesc, output, udp->buffersize, 0);
+	
+	printf("Received %li bytes\n", len);
 
 	return len;
 }
