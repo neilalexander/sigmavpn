@@ -9,39 +9,63 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/select.h>
+#include <errno.h>
 
 #include "types.h"
 #include "modules.h"
 
 int main(int argc, const char** argv)
 {
-	unsigned char publickey[64], privatekey[64];
+	sigma_session session =
+	{
+		loadproto("raw"),
+		loadinterface("tuntap"),
+		loadinterface("dummy")
+	};
 	
-	//unsigned char* publickeyhex = getenv("PUBLIC_KEY");
-	//hex2bin(publickey, publickeyhex, 64);
+	session.proto->init(session.proto);
+	session.local->set(session.local, "nodename", "/dev/tun0");
+	session.local->init(session.local);
 	
-	//unsigned char* privatekeyhex = getenv("PRIVATE_KEY");
-	//hex2bin(privatekey, privatekeyhex, 64);
+	fd_set sockets;
 
-	sigma_proto* naclproto = loadproto("raw");
-	naclproto->init(naclproto);
+	while (1)
+	{
+		FD_ZERO(&sockets);
+		FD_SET(session.local->filedesc, &sockets);
+		FD_SET(session.remote->filedesc, &sockets);
+		
+		int len = select(sizeof(sockets) * 2, &sockets, NULL, NULL, 0);
+		
+		if (len < 0)
+		{
+			fprintf(stderr, "Poll error");
+			return -1;
+		}
+		
+		if (FD_ISSET(session.local->filedesc, &sockets) != 0)
+		{
+			char tuntapbuf[1514];
+			long readvalue = session.local->read(session.local, tuntapbuf, 1514);
 	
-	sigma_intf* tuntap = loadinterface("tuntap");
-	tuntap->set(tuntap, "nodename", "/dev/tap1");
-	int tunmode = 2;
-	tuntap->set(tuntap, "tunmode", &tunmode);
-	tuntap->init(tuntap);
-	
-	char* raw = "HELLO!";
-	unsigned char enc[1514];
-	unsigned char cle[1514];
-	
-	//naclproto->set(naclproto, "publickey", publickey);
-	//naclproto->set(naclproto, "privatekey", privatekey);
-	
-	//naclproto->encode(naclproto, raw, enc, 64);
-	//naclproto->decode(naclproto, enc, cle, 64);
-	//printf("decoded: %s\n", cle);
-	
+			if (readvalue < 0)
+			{
+				fprintf(stderr, "Read error %ld: %s\n", readvalue, strerror(errno));
+				return -1;
+			}
+			
+			long writevalue = session.remote->write(session.remote, tuntapbuf, 1514);
+			
+			if (writevalue < 0)
+			{
+				fprintf(stderr, "Write error %ld: %s\n", writevalue, strerror(errno));
+				return -1;
+			}
+		}
+	}	
+
 	return 0;
 }

@@ -6,17 +6,14 @@
 //  Copyright 2011. All rights reserved.
 //
 
-#ifndef Sigma_session_h
-#define Sigma_session_h
-
 typedef struct sigma_intf
 {
 	int (*init) ();
 	int (*set) ();
-	int (*read) ();
-	int (*write) ();
+	long (*read) ();
+	long (*write) ();
 	
-	int data;
+	int filedesc;
 } sigma_intf;
 
 typedef struct sigma_proto
@@ -42,6 +39,13 @@ typedef struct sigma_session
 }
 sigma_session;
 
+typedef struct sigma_sessionlist
+{
+	sigma_session session;
+	struct sigma_sessionlist* next;
+}
+sigma_sessionlist;
+
 extern sigma_proto* proto_descriptor();
 static int proto_init();
 static int proto_set(sigma_proto *instance, char* param, char* value);
@@ -51,7 +55,5 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 extern sigma_intf* intf_descriptor();
 static int intf_init();
 static int intf_set(sigma_intf *instance, char* param, void* value);
-static int intf_write(sigma_intf *instance, char* input, int len);
-static int intf_read(sigma_intf *instance, char* output, int len);
-
-#endif
+static long intf_write(sigma_intf *instance, char* input, long len);
+static long intf_read(sigma_intf *instance, char* output, long len);

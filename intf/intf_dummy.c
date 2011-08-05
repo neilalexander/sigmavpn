@@ -11,13 +11,13 @@
 
 #include "../types.h"
 
-static int intf_write(sigma_intf *instance, char* input, int len)
+static long intf_write(sigma_intf *instance, char* input, long len)
 {
 	printf("Dummy output: %s\n", input);
 	return len;
 }
 
-static int intf_read(sigma_intf *instance, char* output, int len)
+static long intf_read(sigma_intf *instance, char* output, long len)
 {
 	return len;
 }
