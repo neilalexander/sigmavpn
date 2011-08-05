@@ -1,6 +1,6 @@
 //
 //  proto_nacl0.c
-//  Sigma
+//  Sigma nacl0 protocol code
 //
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.

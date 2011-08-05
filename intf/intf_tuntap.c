@@ -1,6 +1,6 @@
 //
 //  intf_tuntap.h
-//  Sigma
+//  Sigma TUN/TAP interface code
 //
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.
@@ -88,7 +88,7 @@ extern sigma_intf* intf_descriptor()
 	intf_tuntap->baseintf.read = intf_read;
 	intf_tuntap->baseintf.write = intf_write;
 	intf_tuntap->baseintf.set = intf_set;
-	intf_tuntap->buffersize = (long) 1514;
+	intf_tuntap->buffersize = (long) MAX_BUFFER_SIZE;
 	
 	return (sigma_intf*) intf_tuntap;
 }

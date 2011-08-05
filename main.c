@@ -1,6 +1,6 @@
 //
 //  main.c
-//  Sigma
+//  Sigma main code
 //
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.
@@ -31,8 +31,6 @@ int main(int argc, const char** argv)
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));
 	session.local->init(session.local);
 	
-	//printf("Remote address: %s (%s)\n", getenv("REMOTE_ADDRESS"), getenv("REMOTE_PORT"));
-	
 	int localport = atoi(getenv("LOCAL_PORT"));
 	int remoteport = atoi(getenv("REMOTE_PORT"));
 	session.remote->set(session.remote, "localaddr", getenv("LOCAL_ADDRESS"));
@@ -59,44 +57,44 @@ int main(int argc, const char** argv)
 		
 		if (FD_ISSET(session.local->filedesc, &sockets) != 0)
 		{
-			char tuntapbuf[1000];
-			long readvalue = session.local->read(session.local, tuntapbuf, 1000);
+			char tuntapbuf[MAX_BUFFER_SIZE];
+			long readvalue = session.local->read(session.local, tuntapbuf, MAX_BUFFER_SIZE);
 	
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "Read error %ld: %s\n", readvalue, strerror(errno));
+				fprintf(stderr, "TUN/TAP Read error %ld: %s\n", readvalue, strerror(errno));
 				return -1;
 			}
 			
-			long writevalue = session.remote->write(session.remote, tuntapbuf, 1000);
+			long writevalue = session.remote->write(session.remote, tuntapbuf, readvalue);
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "Write error %ld: %s\n", writevalue, strerror(errno));
+				fprintf(stderr, "TUN/TAP Write error %ld: %s\n", writevalue, strerror(errno));
 				return -1;
 			}
 		}
 		
 		if (FD_ISSET(session.remote->filedesc, &sockets) != 0)
 		{
-			char udpbuf[1000];
-			long readvalue = session.remote->read(session.remote, udpbuf, 1000);
+			char udpbuf[MAX_BUFFER_SIZE];
+			long readvalue = session.remote->read(session.remote, udpbuf, MAX_BUFFER_SIZE);
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "Read error %ld: %s\n", readvalue, strerror(errno));
+				fprintf(stderr, "UDP Read error %ld: %s\n", readvalue, strerror(errno));
 				return -1;
 			}
 			
-			long writevalue = session.local->write(session.local, udpbuf, 1000);
+			long writevalue = session.local->write(session.local, udpbuf, readvalue);
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "Write error %ld: %s\n", writevalue, strerror(errno));
+				fprintf(stderr, "UDP Write error %ld: %s\n", writevalue, strerror(errno));
 				return -1;
 			}
 		}
-	}	
+	}
 
 	return 0;
 }

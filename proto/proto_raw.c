@@ -1,6 +1,6 @@
 //
 //  proto_raw.c
-//  Sigma
+//  Sigma raw protocol code
 //
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.

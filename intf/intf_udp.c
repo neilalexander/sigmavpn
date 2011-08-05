@@ -1,6 +1,6 @@
 //
 //  intf_udp.c
-//  Sigma
+//  Sigma UDP interface code
 //
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.
@@ -45,7 +45,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 	
 	int ret;
 	
-	//printf("Sending packet of %li bytes\n", len);
+	printf("Sending packet of %li bytes\n", len);
 
 	#ifdef IPV6
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in6));
@@ -53,7 +53,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in));
 	#endif
 	
-	//printf("Sent %i bytes\n", ret);
+	printf("Sent %i bytes\n", ret);
 	
 	return ret;
 }
@@ -185,7 +185,7 @@ extern sigma_intf* intf_descriptor()
 	intf_udp->baseintf.read = intf_read;
 	intf_udp->baseintf.write = intf_write;
 	intf_udp->baseintf.set = intf_set;
-	intf_udp->buffersize = (long) 1000;
+	intf_udp->buffersize = (long) MAX_BUFFER_SIZE;
 
 	#ifdef IPV6
 		intf_udp->localaddr.sin_family = AF_INET6;
