@@ -33,10 +33,14 @@ int main(int argc, const char** argv)
 	
 	int localport = atoi(getenv("LOCAL_PORT"));
 	int remoteport = atoi(getenv("REMOTE_PORT"));
+	int tunmode = atoi(getenv("TUN_MODE"));
+	int protocolinfo = atoi(getenv("USE_PI"));
 	session.remote->set(session.remote, "localaddr", getenv("LOCAL_ADDRESS"));
 	session.remote->set(session.remote, "remoteaddr", getenv("REMOTE_ADDRESS"));
 	session.remote->set(session.remote, "localport", &localport);
 	session.remote->set(session.remote, "remoteport", &remoteport);
+	session.remote->set(session.remote, "tunmode", &tunmode);
+	session.remote->set(session.remote, "protocolinfo", &protocolinfo);
 	session.remote->init(session.remote);
 	
 	fd_set sockets;
