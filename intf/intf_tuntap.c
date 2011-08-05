@@ -21,6 +21,7 @@ typedef struct sigma_intf_tuntap
 	int filedesc;
 	char nodename[16];
 	int tunmode;
+	int protocolinfo;
 	
 	long buffersize;
 }
@@ -56,11 +57,32 @@ static int intf_init(sigma_intf* instance)
 	
 	if (!tuntap->nodename) strcpy(tuntap->nodename, "/dev/tun0");
 	
-	if ((tuntap->baseintf.filedesc = open(tuntap->nodename, O_RDWR)) < 0)
-	{
-		fprintf(stderr, "Unable to open tuntap device '%s'\n", tuntap->nodename);
-		return -1;
-	}
+	#ifdef __linux__
+		struct ifreq ifr;
+		memset(&ifr, 0, sizeof(ifr));
+	
+		if ((tuntap->baseintf.filedesc = open("/dev/net/tun", O_RDWR)) < 0)
+		{
+			fprintf(stderr, "Unable to find /dev/net/tun");
+			return -1;
+		}
+	
+		strcpy(ifr.ifr_name, tuntap->nodename);
+		ifr.ifr_flags = tuntap->tunmode ? IFF_TUN : IFF_TAP;
+		ifr.ifr_flags |= tuntap->protocolinfo ? 0 : IFF_NO_PI;
+	
+		if (ioctl(tuntap->baseintf.filedesc, TUNSETIFF, (void *) &ifr) < 0)
+		{
+			fprintf(stderr, "Unable to configure tuntap device");
+			return -1;
+		}
+	#else
+		if ((tuntap->baseintf.filedesc = open(tuntap->nodename, O_RDWR)) < 0)
+		{
+			fprintf(stderr, "Unable to open tuntap device '%s'\n", tuntap->nodename);
+			return -1;
+		}
+	#endif
 	
 	printf("Opened tun device '%s'\n", tuntap->nodename);
 	
