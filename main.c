@@ -27,8 +27,8 @@ int main(int argc, const char** argv)
 	};
 	
 	session.proto->init(session.proto);
-	session.proto->set(session.proto, "publickey", "e049336e65bd14586f6ae96674f7a5de2131eca550f088195a8ab73472c1650e");
-	session.proto->set(session.proto, "privatekey", "e02930850bbf4f2cfac647f7648c8de27711c2a00714b86a77efe20a921e221d");
+	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
+	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
 	
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));
 	session.local->init(session.local);
