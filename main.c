@@ -21,12 +21,14 @@ int main(int argc, const char** argv)
 {
 	sigma_session session =
 	{
-		loadproto("raw"),
+		loadproto("nacl0"),
 		loadinterface("tuntap"),
 		loadinterface("udp")
 	};
 	
 	session.proto->init(session.proto);
+	session.proto->set(session.proto, "publickey", "e049336e65bd14586f6ae96674f7a5de2131eca550f088195a8ab73472c1650e");
+	session.proto->set(session.proto, "privatekey", "e02930850bbf4f2cfac647f7648c8de27711c2a00714b86a77efe20a921e221d");
 	
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));
 	session.local->init(session.local);
@@ -61,7 +63,7 @@ int main(int argc, const char** argv)
 		
 		if (FD_ISSET(session.local->filedesc, &sockets) != 0)
 		{
-			char tuntapbuf[MAX_BUFFER_SIZE];
+			char tuntapbuf[MAX_BUFFER_SIZE], tuntapbufenc[MAX_BUFFER_SIZE];
 			long readvalue = session.local->read(session.local, tuntapbuf, MAX_BUFFER_SIZE);
 	
 			if (readvalue < 0)
@@ -69,6 +71,8 @@ int main(int argc, const char** argv)
 				fprintf(stderr, "TUN/TAP Read error %ld: %s\n", readvalue, strerror(errno));
 				return -1;
 			}
+			
+			readvalue = session.proto->encode(session.proto, tuntapbuf, tuntapbufenc, readvalue);
 			
 			long writevalue = session.remote->write(session.remote, tuntapbuf, readvalue);
 			
@@ -81,14 +85,16 @@ int main(int argc, const char** argv)
 		
 		if (FD_ISSET(session.remote->filedesc, &sockets) != 0)
 		{
-			char udpbuf[MAX_BUFFER_SIZE];
-			long readvalue = session.remote->read(session.remote, udpbuf, MAX_BUFFER_SIZE);
+			char udpbuf[MAX_BUFFER_SIZE], udpbufenc[MAX_BUFFER_SIZE];
+			long readvalue = session.remote->read(session.remote, udpbufenc, MAX_BUFFER_SIZE);
 			
 			if (readvalue < 0)
 			{
 				fprintf(stderr, "UDP Read error %ld: %s\n", readvalue, strerror(errno));
 				return -1;
 			}
+			
+			readvalue = session.proto->decode(session.proto, udpbufenc, udpbuf, readvalue);
 			
 			long writevalue = session.local->write(session.local, udpbuf, readvalue);
 			
