@@ -12,11 +12,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 
 #include "../types.h"
 
 #ifdef linux
+#include <net/if.h>
 #include <linux/if_tun.h>
 #include <linux/if_ether.h>
 #endif
