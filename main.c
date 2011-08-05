@@ -26,9 +26,9 @@ int main(int argc, const char** argv)
 		loadinterface("udp")
 	};
 	
-	session.proto->init(session.proto);
 	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
 	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
+	session.proto->init(session.proto);
 	
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));
 	session.local->init(session.local);
@@ -74,7 +74,7 @@ int main(int argc, const char** argv)
 			
 			readvalue = session.proto->encode(session.proto, tuntapbuf, tuntapbufenc, readvalue);
 			
-			long writevalue = session.remote->write(session.remote, tuntapbuf, readvalue);
+			long writevalue = session.remote->write(session.remote, tuntapbufenc, readvalue);
 			
 			if (writevalue < 0)
 			{
