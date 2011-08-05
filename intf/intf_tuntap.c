@@ -14,6 +14,11 @@
 
 #include "../types.h"
 
+#ifdef linux
+#include <linux/if_tun.h>
+#include <linux/if_ether.h>
+#endif
+
 typedef struct sigma_intf_tuntap
 {
 	sigma_intf baseintf;
