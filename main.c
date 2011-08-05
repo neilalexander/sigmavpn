@@ -23,12 +23,23 @@ int main(int argc, const char** argv)
 	{
 		loadproto("raw"),
 		loadinterface("tuntap"),
-		loadinterface("dummy")
+		loadinterface("udp")
 	};
 	
 	session.proto->init(session.proto);
-	session.local->set(session.local, "nodename", "/dev/tun0");
+	
+	session.local->set(session.local, "nodename", getenv("INTERFACE"));
 	session.local->init(session.local);
+	
+	//printf("Remote address: %s (%s)\n", getenv("REMOTE_ADDRESS"), getenv("REMOTE_PORT"));
+	
+	int localport = atoi(getenv("LOCAL_PORT"));
+	int remoteport = atoi(getenv("REMOTE_PORT"));
+	session.remote->set(session.remote, "localaddr", getenv("LOCAL_ADDRESS"));
+	session.remote->set(session.remote, "remoteaddr", getenv("REMOTE_ADDRESS"));
+	session.remote->set(session.remote, "localport", &localport);
+	session.remote->set(session.remote, "remoteport", &remoteport);
+	session.remote->init(session.remote);
 	
 	fd_set sockets;
 
@@ -48,8 +59,8 @@ int main(int argc, const char** argv)
 		
 		if (FD_ISSET(session.local->filedesc, &sockets) != 0)
 		{
-			char tuntapbuf[1514];
-			long readvalue = session.local->read(session.local, tuntapbuf, 1514);
+			char tuntapbuf[1000];
+			long readvalue = session.local->read(session.local, tuntapbuf, 1000);
 	
 			if (readvalue < 0)
 			{
@@ -57,7 +68,27 @@ int main(int argc, const char** argv)
 				return -1;
 			}
 			
-			long writevalue = session.remote->write(session.remote, tuntapbuf, 1514);
+			long writevalue = session.remote->write(session.remote, tuntapbuf, 1000);
+			
+			if (writevalue < 0)
+			{
+				fprintf(stderr, "Write error %ld: %s\n", writevalue, strerror(errno));
+				return -1;
+			}
+		}
+		
+		if (FD_ISSET(session.remote->filedesc, &sockets) != 0)
+		{
+			char udpbuf[1000];
+			long readvalue = session.remote->read(session.remote, udpbuf, 1000);
+			
+			if (readvalue < 0)
+			{
+				fprintf(stderr, "Read error %ld: %s\n", readvalue, strerror(errno));
+				return -1;
+			}
+			
+			long writevalue = session.local->write(session.local, udpbuf, 1000);
 			
 			if (writevalue < 0)
 			{
