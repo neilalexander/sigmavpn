@@ -31,7 +31,7 @@ static int handler(void* user, const char* section, const char* name, const char
 	if (name == NULL && value == NULL)
 	{
 		sigma_sessionlist* newobject = malloc(sizeof(sigma_sessionlist));
-		strlcpy(newobject->session.sessionname, section, 32);
+		strncpy(newobject->session.sessionname, section, 32);
 		
 		if (sessions == NULL)
 		{
