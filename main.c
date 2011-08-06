@@ -16,6 +16,7 @@
 
 #include "types.h"
 #include "modules.h"
+#include "dep/ini.h"
 
 int main(int argc, const char** argv)
 {
@@ -26,6 +27,17 @@ int main(int argc, const char** argv)
 		loadinterface("udp")
 	};
 	
+	
+	
+	if (argc == 0)
+	{
+		printf("No configuration file passed, assuming sigma.conf\n");
+	}
+		else
+	{
+		
+	}
+	
 	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
 	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
 	session.proto->init(session.proto);
@@ -34,9 +46,21 @@ int main(int argc, const char** argv)
 	session.local->init(session.local);
 	
 	int localport = atoi(getenv("LOCAL_PORT"));
+	if (localport == 0)
+		localport = 3410;
+	
 	int remoteport = atoi(getenv("REMOTE_PORT"));
+	if (remoteport == 0)
+		remoteport = 3410;
+	
 	int tunmode = atoi(getenv("TUN_MODE"));
+	if (tunmode == 0)
+		tunmode = 0;
+	
 	int protocolinfo = atoi(getenv("USE_PI"));
+	if (protocolinfo == 0)
+		protocolinfo = 0;
+	
 	session.remote->set(session.remote, "localaddr", getenv("LOCAL_ADDRESS"));
 	session.remote->set(session.remote, "remoteaddr", getenv("REMOTE_ADDRESS"));
 	session.remote->set(session.remote, "localport", &localport);

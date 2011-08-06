@@ -12,6 +12,7 @@ fi
 gcc 	$CCFLAGS -c 		-o build/main.o main.c
 gcc	$CCFLAGS -c 		-o build/modules.o modules.c
 gcc 	$CCFLAGS -c 		-o build/types.o types.c
+gcc	$CCFLAGS -c		-o build/ini.o dep/ini.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/proto_raw.o proto/proto_raw.c
 if [ -f "./include/crypto_box_curve25519xsalsa20poly1305.h" ]
 then
@@ -20,4 +21,4 @@ fi
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_dummy.o intf/intf_dummy.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_tuntap.o intf/intf_tuntap.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_udp.o intf/intf_udp.c
-gcc 	$CCFLAGS -ldl 		-o build/sigma build/main.o build/modules.o build/types.o
+gcc 	$CCFLAGS -ldl 		-o build/sigma build/main.o build/modules.o build/types.o build/ini.o

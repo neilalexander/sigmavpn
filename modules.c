@@ -16,8 +16,8 @@
 
 sigma_proto* loadproto(char* protoname)
 {
-	char* path = malloc(sizeof(char) * 32);
-	sprintf(path, "build/proto_%s.o", protoname);
+	char path[32];
+	snprintf(path, sizeof(path), "build/proto_%s.o", protoname);
 	
 	void* proto_lib = dlopen(path, RTLD_NOW);
 	
@@ -42,8 +42,8 @@ sigma_proto* loadproto(char* protoname)
 
 sigma_intf* loadinterface(char* intfname)
 {
-	char* path = malloc(sizeof(char) * 32);
-	sprintf(path, "build/intf_%s.o", intfname);
+	char path[32];
+	snprintf(path, sizeof(path), "build/intf_%s.o", intfname);
 	
 	void* intf_lib = dlopen(path, RTLD_NOW);
 	
