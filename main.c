@@ -62,8 +62,6 @@ static int handler(void* user, const char* section, const char* name, const char
 			return -1;
 		}
 		
-		printf("Updating session %s...\n", pointer->session.sessionname);
-		
 		if (strcmp(name, "proto") == 0)
 		{
 			pointer->session.proto = loadproto((char*) value);
@@ -73,7 +71,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		{
 			if (pointer->session.proto == NULL)
 			{
-				fprintf(stderr, "Parameter '%s' ignored; 'proto=' should appear before '%s=' in the config file\n", name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'proto=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
 				return -1;
 			}
 			
@@ -89,7 +87,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		{
 			if (pointer->session.remote == NULL)
 			{
-				fprintf(stderr, "Parameter '%s' ignored; 'peer=' should appear before '%s=' in the config file\n", name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'peer=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
 				return -1;
 			}
 				
@@ -105,7 +103,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		{
 			if (pointer->session.local == NULL)
 			{
-				fprintf(stderr, "Parameter '%s' ignored; 'local=' should appear before '%s=' in the config file\n", name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'local=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
 				return -1;
 			}
 				
@@ -118,6 +116,8 @@ static int handler(void* user, const char* section, const char* name, const char
 
 int main(int argc, const char** argv)
 {
+	printf("Sigma VPN pre-alpha.\nCopyright (c) 2011 Neil Alexander. All rights reserved.\n");
+	
 	sessions = NULL;
 	pointer = NULL;
 	
@@ -187,25 +187,41 @@ int runsession(sigma_session* session)
 	
 	if (session->proto == NULL)
 	{
-		fprintf(stderr, "Protocol loading failed.\n");
+		fprintf(stderr, "%s: Protocol not loaded, configuration error?\n", session->sessionname);
 		return -1;
 	}
 	
 	if (session->local == NULL)
 	{
-		fprintf(stderr, "Local interface loading failed.\n");
+		fprintf(stderr, "%s: Local interface not loaded, configuration error?\n", session->sessionname);
 		return -1;
 	}
 	
 	if (session->remote == NULL)
 	{
-		fprintf(stderr, "Peer interface loading failed.\n");
+		fprintf(stderr, "%s: Peer interface not loaded, configuration error?\n", session->sessionname);
 		return -1;
 	}
 	
-	session->proto->init(session->proto);
-	session->local->init(session->local);
-	session->remote->init(session->remote);
+	if (session->proto->init(session->proto) == -1)
+	{
+		fprintf(stderr, "%s: Protocol initalisation failed, session not loaded\n", session->sessionname);
+		return -1;
+	}
+	
+	if (session->local->init(session->local) == -1)
+	{
+		fprintf(stderr, "%s: Local interface initialisation failed, session not loaded\n", session->sessionname);
+		return -1;
+	}
+	
+	if (session->remote->init(session->remote) == -1)
+	{
+		fprintf(stderr, "%s: Peer interface initialisation failed, session not loaded\n", session->sessionname);
+		return -1;
+	}
+	
+	printf("%s: Session active\n", session->sessionname);
 	
 	while (1)
 	{
@@ -228,7 +244,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "TUN/TAP Read error %ld: %s\n", readvalue, strerror(errno));
+				fprintf(stderr, "%s: Left read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -238,7 +254,7 @@ int runsession(sigma_session* session)
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "TUN/TAP Write error %ld: %s\n", writevalue, strerror(errno));
+				fprintf(stderr, "%s: Left write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
 				return -1;
 			}
 		}
@@ -250,7 +266,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "UDP Read error %ld: %s\n", readvalue, strerror(errno));
+				fprintf(stderr, "%s: Right read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -260,7 +276,7 @@ int runsession(sigma_session* session)
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "UDP Write error %ld: %s\n", writevalue, strerror(errno));
+				fprintf(stderr, "%s: Right write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
 				return -1;
 			}
 		}

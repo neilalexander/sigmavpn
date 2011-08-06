@@ -91,8 +91,6 @@ static int intf_init(sigma_intf* instance)
 		}
 	#endif
 	
-	printf("Opened tun device '%s'\n", tuntap->nodename);
-	
 	return 0;
 }
 

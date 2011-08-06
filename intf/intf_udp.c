@@ -91,8 +91,6 @@ static int intf_init(sigma_intf* instance)
 		return -1;
 	}
 	
-	printf("UDP socket created\n");
-	
 	#ifdef IPV6
 		if (bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in6)))
 	#else
@@ -102,8 +100,6 @@ static int intf_init(sigma_intf* instance)
 		fprintf(stderr, "Unable to bind UDP socket\n");
 		return -1;
 	}
-	
-	printf("UDP socket bound\n");
 	
 	return 0;
 }
