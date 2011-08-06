@@ -15,7 +15,7 @@ gcc 	$CCFLAGS -c 		-o build/types.o types.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/proto_raw.o proto/proto_raw.c
 if [ -f "./include/crypto_box_curve25519xsalsa20poly1305.h" ]
 then
-        gcc     $CCFLAGS $DYFLAGS       -o build/proto_nacl0.o proto/proto_nacl0.c lib/libnacl.a
+        gcc     $CCFLAGS $DYFLAGS       -o build/proto_nacl0.o proto/proto_nacl0.c lib/libnacl.a build/types.o
 fi
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_dummy.o intf/intf_dummy.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_tuntap.o intf/intf_tuntap.c

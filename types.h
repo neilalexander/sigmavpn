@@ -51,8 +51,8 @@ sigma_sessionlist;
 extern sigma_proto* proto_descriptor();
 static int proto_init();
 static int proto_set(sigma_proto *instance, char* param, char* value);
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len);
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len);
+static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
+static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
 
 extern sigma_intf* intf_descriptor();
 static int intf_init();

@@ -31,41 +31,37 @@ sigma_proto_nacl;
 static int proto_set(sigma_proto* instance, char* param, char* value)
 {	
 	if (strcmp(param, "publickey") == 0)
-		memcpy(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
+		hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
 	
 	if (strcmp(param, "privatekey") == 0)
-		memcpy(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
+		hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
 	
 	return 0;
 }
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len)
+static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
 	unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
+	unsigned char tempbuffer[len];
+	
 	memset(n, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-	
-	memset(output, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
-	
-	hex_dump(n, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-	
+	memset(input, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
+
 	int result = crypto_box_curve25519xsalsa20poly1305(
-		output,
+		tempbuffer,
 		input,
 		len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES,
 		n,
 		((sigma_proto_nacl*) instance)->publickey,
 		((sigma_proto_nacl*) instance)->privatekey
 	);
-
-	printf("\n");
-	hex_dump(output, len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 	
-	fprintf(stderr, "Encryption (length %i, given result %i)\n", len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, result);
+	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 
-	return len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
+	return len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len)
+static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
 	if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES)
 	{
@@ -74,33 +70,27 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	}
 	
 	unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
+	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES];
+	
 	memset(n, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-	
-	hex_dump(n, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-	
-	//len -= crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
-	
-	memset(input, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+	memset(tempbuffer, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+	memcpy(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, input, len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 
 	int result = crypto_box_curve25519xsalsa20poly1305_open(
 		output,
-		input,
-		len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES,
+		tempbuffer,
+		len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES,
 		n,
 		((sigma_proto_nacl*) instance)->publickey,
 		((sigma_proto_nacl*) instance)->privatekey
 	);
-	
-	printf("\n");
-	hex_dump(input, len);
-	//hex_dump(output, len);
 	
 	if (result)
 	{
 		fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
 	}
 	
-	return len;
+	return len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
 
 static int proto_init(sigma_proto *instance)

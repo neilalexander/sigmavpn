@@ -12,13 +12,13 @@
 
 #include "../types.h"
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len)
+static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
 	memcpy(output, input, len);
 	return len;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, int len)
+static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
 	memcpy(output, input, len);
 	return len;

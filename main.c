@@ -16,6 +16,7 @@
 
 #include "types.h"
 #include "modules.h"
+#include "hexdump.c"
 
 int main(int argc, const char** argv)
 {
@@ -26,16 +27,8 @@ int main(int argc, const char** argv)
 		loadinterface("udp")
 	};
 	
-	char publickey[64];
-	char privatekey[64];
-	
-	hex2bin(publickey, getenv("PUBLIC_KEY"), 64);
-	hex2bin(privatekey, getenv("PRIVATE_KEY"), 64);
-	
-	printf("%s %s\n", publickey, privatekey);
-	
-	session.proto->set(session.proto, "publickey", publickey);
-	session.proto->set(session.proto, "privatekey", privatekey);
+	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
+	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
 	session.proto->init(session.proto);
 	
 	session.local->set(session.local, "nodename", getenv("INTERFACE"));
@@ -80,7 +73,9 @@ int main(int argc, const char** argv)
 				return -1;
 			}
 			
+			hex_dump(tuntapbuf, readvalue);
 			readvalue = session.proto->encode(session.proto, tuntapbuf, tuntapbufenc, readvalue);
+			hex_dump(tuntapbufenc, readvalue);
 			
 			long writevalue = session.remote->write(session.remote, tuntapbufenc, readvalue);
 			
@@ -102,7 +97,9 @@ int main(int argc, const char** argv)
 				return -1;
 			}
 			
+			hex_dump(udpbufenc, readvalue);
 			readvalue = session.proto->decode(session.proto, udpbufenc, udpbuf, readvalue);
+			hex_dump(udpbuf, readvalue);
 			
 			long writevalue = session.local->write(session.local, udpbuf, readvalue);
 			
