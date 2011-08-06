@@ -57,13 +57,12 @@ static int handler(void* user, const char* section, const char* name, const char
 		}
 		
 		if (pointer == NULL)
-			return -1;
-		
-		if (pointer == NULL)
 		{
 			fprintf(stderr, "Session %s not found (this should never happen)\n", section);
 			return -1;
 		}
+		
+		printf("Updating session %s...\n", pointer->session.sessionname);
 		
 		if (strcmp(name, "proto") == 0)
 		{
@@ -151,15 +150,15 @@ int main(int argc, const char** argv)
 		}
 		
 		int rc = pthread_create(&threads[threadnum], 0, sessionwrapper, &pointer->session);
+
+		threadnum ++;
+		pointer = pointer->next;
 		
 		if (rc)
 		{
 			fprintf(stderr, "Thread returned %d\n", rc);
 			return -1;
 		}
-
-		threadnum ++;
-		pointer = pointer->next;
 	}
 	
 	pointer = sessions;
@@ -204,9 +203,9 @@ int runsession(sigma_session* session)
 		return -1;
 	}
 	
-	session->proto->init(pointer->session.proto);
-	session->local->init(pointer->session.local);
-	session->remote->init(pointer->session.remote);
+	session->proto->init(session->proto);
+	session->local->init(session->local);
+	session->remote->init(session->remote);
 	
 	while (1)
 	{
