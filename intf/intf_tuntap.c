@@ -100,7 +100,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 {	
 	sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 	
-	if (strcmp(param, "nodename") == 0)
+	if (strcmp(param, "interface") == 0)
 		memcpy(tuntap->nodename, (char*) value, 16);
 	
 	if (strcmp(param, "tunmode") == 0)

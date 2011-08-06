@@ -33,11 +33,10 @@ sigma_proto;
 
 typedef struct sigma_session
 {
+	char sessionname[32];
 	sigma_proto* proto;
 	sigma_intf* local;
 	sigma_intf* remote;
-	
-	int maxpacketsize;
 }
 sigma_session;
 
@@ -49,7 +48,7 @@ typedef struct sigma_sessionlist
 sigma_sessionlist;
 
 void* sessionwrapper(void* param);
-int runsession(sigma_session session);
+int runsession(sigma_session* session);
 
 extern sigma_proto* proto_descriptor();
 static int proto_init();

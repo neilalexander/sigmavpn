@@ -98,6 +98,11 @@ int ini_parse_file(FILE* file,
 					*end = '\0';
 					strncpy0(section, start + 1, sizeof(section));
 					*prev_name = '\0';
+					
+					// copy&paste code to alert the handler function when a new section
+					// has been opened in the INI file
+					if (!handler(user, section, NULL, NULL) && !error)
+						error = lineno;
 				}
 				else if (!error) {
 					/* No ']' found on section line */
