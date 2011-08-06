@@ -45,16 +45,12 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 	
 	int ret;
 	
-	//printf("Sending packet of %li bytes\n", len);
-
 	#ifdef IPV6
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in6));
 	#else
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in));
 	#endif
-	
-	//printf("Sent %i bytes\n", ret);
-	
+
 	return ret;
 }
 
@@ -70,8 +66,6 @@ static long intf_read(sigma_intf *instance, char* output, long len)
 	
 	len = recv(udp->baseintf.filedesc, output, udp->buffersize, 0);
 	
-	//printf("Received %li bytes\n", len);
-
 	return len;
 }
 
@@ -192,12 +186,6 @@ extern sigma_intf* intf_descriptor()
 		intf_udp->localaddr.sin_family = AF_INET;
 		intf_udp->remoteaddr.sin_family = AF_INET;
 	#endif
-	
-	//intf_udp->localaddr.sin_addr.s_addr = INADDR_ANY;
-	//intf_udp->localaddr.sin_port = htons(3490);
-
-	//intf_udp->remoteaddr.sin_addr.s_addr = INADDR_ANY;
-	//intf_udp->remoteaddr.sin_port = htons(3490);
 	
 	return (sigma_intf*) intf_udp;
 }

@@ -104,6 +104,9 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	if (strcmp(param, "tunmode") == 0)
 		tuntap->tunmode = *(int*) value;
 	
+	if (strcmp(param, "protocolinfo") == 0)
+		tuntap->protocolinfo = *(int*) value;
+	
 	return 0;
 }
 
