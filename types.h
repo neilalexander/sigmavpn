@@ -48,6 +48,9 @@ typedef struct sigma_sessionlist
 }
 sigma_sessionlist;
 
+void* sessionwrapper(void* param);
+int runsession(sigma_session session);
+
 extern sigma_proto* proto_descriptor();
 static int proto_init();
 static int proto_set(sigma_proto *instance, char* param, char* value);

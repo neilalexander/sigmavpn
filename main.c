@@ -13,10 +13,13 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "types.h"
 #include "modules.h"
 #include "dep/ini.h"
+
+#define NUM_THREADS	16
 
 int main(int argc, const char** argv)
 {
@@ -26,18 +29,7 @@ int main(int argc, const char** argv)
 		loadinterface("tuntap"),
 		loadinterface("udp")
 	};
-	
-	
-	
-	if (argc == 0)
-	{
-		printf("No configuration file passed, assuming sigma.conf\n");
-	}
-		else
-	{
-		
-	}
-	
+
 	session.proto->set(session.proto, "publickey", getenv("PUBLIC_KEY"));
 	session.proto->set(session.proto, "privatekey", getenv("PRIVATE_KEY"));
 	session.proto->init(session.proto);
@@ -46,20 +38,9 @@ int main(int argc, const char** argv)
 	session.local->init(session.local);
 	
 	int localport = atoi(getenv("LOCAL_PORT"));
-	if (localport == 0)
-		localport = 3410;
-	
 	int remoteport = atoi(getenv("REMOTE_PORT"));
-	if (remoteport == 0)
-		remoteport = 3410;
-	
 	int tunmode = atoi(getenv("TUN_MODE"));
-	if (tunmode == 0)
-		tunmode = 0;
-	
 	int protocolinfo = atoi(getenv("USE_PI"));
-	if (protocolinfo == 0)
-		protocolinfo = 0;
 	
 	session.remote->set(session.remote, "localaddr", getenv("LOCAL_ADDRESS"));
 	session.remote->set(session.remote, "remoteaddr", getenv("REMOTE_ADDRESS"));
@@ -69,8 +50,33 @@ int main(int argc, const char** argv)
 	session.remote->set(session.remote, "protocolinfo", &protocolinfo);
 	session.remote->init(session.remote);
 	
-	fd_set sockets;
+	pthread_t threads[NUM_THREADS];
+	
+	int rc = pthread_create(&threads[0], NULL, sessionwrapper, &session);
+	
+	if (rc)
+	{
+		printf("Thread returned %d\n", rc);
+		return -1;
+	}
+	
+	runsession(session);
 
+	return 0;
+}
+
+void* sessionwrapper(void* param)
+{
+	sigma_session* sessionparam;
+	sessionparam = (sigma_session*) param;
+	int status = runsession(*sessionparam);
+	pthread_exit(&status);
+}
+
+int runsession(sigma_session session)
+{
+	fd_set sockets;
+	
 	while (1)
 	{
 		FD_ZERO(&sockets);
@@ -89,7 +95,7 @@ int main(int argc, const char** argv)
 		{
 			char tuntapbuf[MAX_BUFFER_SIZE], tuntapbufenc[MAX_BUFFER_SIZE];
 			long readvalue = session.local->read(session.local, tuntapbuf, MAX_BUFFER_SIZE);
-	
+			
 			if (readvalue < 0)
 			{
 				fprintf(stderr, "TUN/TAP Read error %ld: %s\n", readvalue, strerror(errno));
@@ -129,6 +135,6 @@ int main(int argc, const char** argv)
 			}
 		}
 	}
-
+	
 	return 0;
 }
