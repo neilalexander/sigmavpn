@@ -50,7 +50,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		while (pointer)
 		{			
-			if (strcmp(pointer->session.sessionname, section) == 0)
+			if (strncmp(pointer->session.sessionname, section, 32) == 0)
 				break;
 			
 			pointer = pointer->next;
@@ -115,15 +115,81 @@ static int handler(void* user, const char* section, const char* name, const char
 }
 
 int main(int argc, const char** argv)
-{
-	printf("Sigma VPN pre-alpha.\nCopyright (c) 2011 Neil Alexander. All rights reserved.\n");
+{	
+	printf("Sigma VPN alpha.\nCopyright (c) 2011 Neil Alexander. All rights reserved.\n");
+	
+	conf = malloc(sizeof(sigma_conf));
+	strncpy(conf->modulepath, "/usr/local/lib/sigma", 128);
+	strncpy(conf->configfile, "/usr/local/etc/sigma.conf", 128);
+
+	int arg;
+	
+	for (arg = 1; arg < argc; arg ++)
+	{
+		if (argv[arg][0] != '-')
+			continue;
+		
+		switch ((int) argv[arg][1])
+		{
+			case '?':
+			{
+				printf("Possible arguments:\n\t-c 'path/to/config.conf'\n\t-m 'path/to/module/folder'\n");
+				return -1;
+			}
+				
+			case 'c':
+			{	
+				if (argv[arg + 1] == NULL)
+				{
+					fprintf(stderr, "Expected configuration path after '-c'\n");
+					continue;
+				}
+				
+				strncpy(conf->configfile, argv[arg + 1], 128);
+				printf("Using configuration file '%s'\n", argv[arg + 1]);
+				arg ++;
+				
+				break;
+			}
+				
+			case 'm':
+			{	
+				if (argv[arg + 1] == NULL)
+				{
+					fprintf(stderr, "Expected module path after '-m'\n");
+					continue;
+				}
+				
+				strncpy(conf->modulepath, argv[arg + 1], 128);
+				printf("Using module path '%s'\n", argv[arg + 1]);
+				arg ++;
+				
+				break;
+			}
+			
+			default:
+				fprintf(stderr, "Unknown argument '%s'\n", argv[arg]);
+		}
+	}
+	
+	if (access(conf->modulepath) == -1)
+	{
+		printf("Module directory '%s' is missing; specify a path with '-m'\n", conf->modulepath);
+		return -1;
+	}
+	
+	if (access(conf->configfile) == -1)
+	{
+		printf("Configuration file '%s' is missing; specify a path with '-c'\n", conf->configfile);
+		return -1;
+	}
 	
 	sessions = NULL;
 	pointer = NULL;
 	
-	if (ini_parse("sigma.conf", handler, (void*) NULL) < 0)
+	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
-        printf("Configuration file 'sigma.conf' is missing\n");
+        printf("Configuration file '%s' could not be parsed\n", conf->configfile);
         return 1;
     }
 	

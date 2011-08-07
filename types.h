@@ -8,6 +8,15 @@
 
 #define MAX_BUFFER_SIZE 1518
 
+typedef struct sigma_conf
+{
+	char modulepath[128];
+	char configfile[128];
+}
+sigma_conf;
+
+sigma_conf* conf;
+
 typedef struct sigma_intf
 {
 	int (*init) ();
@@ -16,7 +25,8 @@ typedef struct sigma_intf
 	long (*write) ();
 	
 	int filedesc;
-} sigma_intf;
+}
+sigma_intf;
 
 typedef struct sigma_proto
 {
