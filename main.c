@@ -172,17 +172,19 @@ int main(int argc, const char** argv)
 		}
 	}
 	
+	/*
 	if (access(conf->modulepath) == -1)
 	{
-		printf("Module directory '%s' is missing; specify a path with '-m'\n", conf->modulepath);
+		printf("Module directory '%s' does not exist; specify a path with '-m'\n", conf->modulepath);
 		return -1;
 	}
 	
 	if (access(conf->configfile) == -1)
 	{
-		printf("Configuration file '%s' is missing; specify a path with '-c'\n", conf->configfile);
+		printf("Configuration file '%s' does not exist; specify a path with '-c'\n", conf->configfile);
 		return -1;
 	}
+	*/
 	
 	sessions = NULL;
 	pointer = NULL;
