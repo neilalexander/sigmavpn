@@ -70,7 +70,7 @@ static int intf_init(sigma_intf* instance)
 	
 		if ((tuntap->baseintf.filedesc = open("/dev/net/tun", O_RDWR)) < 0)
 		{
-			fprintf(stderr, "Unable to find /dev/net/tun");
+			fprintf(stderr, "Unable to find /dev/net/tun\n");
 			return -1;
 		}
 	
@@ -80,7 +80,7 @@ static int intf_init(sigma_intf* instance)
 	
 		if (ioctl(tuntap->baseintf.filedesc, TUNSETIFF, (void *) &ifr) < 0)
 		{
-			fprintf(stderr, "Unable to configure tuntap device");
+			fprintf(stderr, "Unable to configure tuntap device\n");
 			return -1;
 		}
 	#else

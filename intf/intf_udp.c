@@ -115,13 +115,13 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 		if (!host)
 		{
-			printf("Unable to look up address");
+			printf("Unable to look up address\n");
 			return -1;
 		}
 		else
 			if (!host->h_addr_list[0])
 			{
-				printf("No addresses available");
+				printf("No addresses available\n");
 				return -1;
 			}
 		
@@ -131,7 +131,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	
 	if (strcmp(param, "localport") == 0)
 	{
-		udp->localaddr.sin_port = htons(*(int*) value);
+		udp->localaddr.sin_port = atoi(value);
 	}
 	
 	if (strcmp(param, "remoteaddr") == 0)
@@ -147,13 +147,13 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 		if (!host)
 		{
-			printf("Unable to look up address");
+			printf("Unable to look up address\n");
 			return -1;
 		}
 			else
 		if (!host->h_addr_list[0])
 		{
-			printf("No addresses available");
+			printf("No addresses available\n");
 			return -1;
 		}
 		
@@ -163,7 +163,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	
 	if (strcmp(param, "remoteport") == 0)
 	{
-		udp->remoteaddr.sin_port = htons(*(int*) value);
+		udp->remoteaddr.sin_port = atoi(value);
 	}
 	
 	return 0;

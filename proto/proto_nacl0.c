@@ -24,6 +24,7 @@ typedef struct sigma_proto_nacl
 	char decbuffer[MAX_BUFFER_SIZE + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
 	unsigned char privatekey[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];
 	unsigned char publickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
+	unsigned char precomp[crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES];
 }
 sigma_proto_nacl;
 
@@ -63,13 +64,12 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 	memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
 	memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
 	
-	int result = crypto_box_curve25519xsalsa20poly1305(
+	int result = crypto_box_curve25519xsalsa20poly1305_afternm(
 		tempbuffer,
 		tempbufferinput,
 		len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES,
 		n,
-		((sigma_proto_nacl*) instance)->publickey,
-		((sigma_proto_nacl*) instance)->privatekey
+		((sigma_proto_nacl*) instance)->precomp
 	);
 	
 	if (result)
@@ -103,13 +103,12 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	memset(tempbuffer, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 	memcpy(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, input, len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 
-	int result = crypto_box_curve25519xsalsa20poly1305_open(
+	int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(
 		tempbufferout,
 		tempbuffer,
 		len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES,
 		n,
-		((sigma_proto_nacl*) instance)->publickey,
-		((sigma_proto_nacl*) instance)->privatekey
+		((sigma_proto_nacl*) instance)->precomp
 	);
 	
 	if (result)
@@ -130,6 +129,12 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 
 static int proto_init(sigma_proto *instance)
 {
+	crypto_box_curve25519xsalsa20poly1305_beforenm(
+		((sigma_proto_nacl*) instance)->precomp,
+		((sigma_proto_nacl*) instance)->publickey,
+		((sigma_proto_nacl*) instance)->privatekey
+	);
+	
 	return 0;
 }
 
