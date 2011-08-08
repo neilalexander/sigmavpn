@@ -104,12 +104,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	
 	if (strcmp(param, "localaddr") == 0)
 	{
-		#ifdef IPV6
-		#	inet_pton(AF_INET6, *(char*) value, &(udp->localaddr.sin_addr));
-		#elsif
-		#	inet_pton(AF_INET, *(char*) value, &(udp->localaddr.sin_addr));
-		#endif
-		
 		struct hostent *host;
 		host = gethostbyname((char*) value);
 		
@@ -125,13 +119,18 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 				return -1;
 			}
 		
-		udp->localaddr.sin_family = host->h_addrtype;
-		udp->localaddr.sin_addr.s_addr = *((unsigned long*)host->h_addr_list[0]);
+		#ifdef IPV6
+			udp->localaddr.sin6_family = host->h_addrtype;
+			udp->localaddr.sin6_addr.s6_addr = *((unsigned long*)host->h_addr_list[0]);
+		#else
+			udp->localaddr.sin_family = host->h_addrtype;
+			udp->localaddr.sin_addr.s_addr = *((unsigned long*)host->h_addr_list[0]);
+		#endif
 	}
 	
 	if (strcmp(param, "localport") == 0)
 	{
-		udp->localaddr.sin_port = atoi(value);
+		udp->localaddr.sin_port = (unsigned int) htons(atoi(value));
 	}
 	
 	if (strcmp(param, "remoteaddr") == 0)
@@ -163,7 +162,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	
 	if (strcmp(param, "remoteport") == 0)
 	{
-		udp->remoteaddr.sin_port = atoi(value);
+		udp->remoteaddr.sin_port = (unsigned int) htons(atoi(value));
 	}
 	
 	return 0;
