@@ -5,6 +5,10 @@
 //  Created by Neil Alexander on 05/08/2011.
 //  Copyright 2011. All rights reserved.
 //
+//  The nacl0 code is derived, with permission,
+//  from Quicktun written by Ivo Smits.
+//  http://oss.ucis.nl/hg/quicktun/
+//
 
 #include <string.h>
 #include <stdio.h>
