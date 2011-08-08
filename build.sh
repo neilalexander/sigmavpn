@@ -47,6 +47,7 @@ fi
 if [ -f "./include/crypto_box_curve25519xsalsa20poly1305.h" ]
 then
         gcc     $CCFLAGS $DYFLAGS       -o build/proto_nacl0.o proto/proto_nacl0.c lib/libnacl.a build/types.o
+	gcc	$CCFLAGS $DYFLAGS	-o build/proto_nacltai.o proto/proto_nacltai.c lib/libnacl.a build/types.o
 	gcc	$CCFLAGS -c		-o build/naclkeypair.o naclkeypair.c
 	gcc	$CCFLAGS		-o build/naclkeypair build/naclkeypair.o lib/libnacl.a lib/randombytes.o
 fi
