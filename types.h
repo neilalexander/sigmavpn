@@ -6,7 +6,7 @@
 //  Copyright 2011. All rights reserved.
 //
 
-#define MAX_BUFFER_SIZE 1518
+#define MAX_BUFFER_SIZE 1546
 
 typedef struct sigma_conf
 {

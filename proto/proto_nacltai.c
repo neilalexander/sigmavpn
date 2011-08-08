@@ -202,7 +202,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	}
 	
 	struct taia cdtaic;
-	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES], tempbufferout[len];
+	unsigned char tempbufferout[len];
 	
 	len -= overhead;
 	
