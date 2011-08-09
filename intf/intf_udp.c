@@ -126,65 +126,84 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	
 	if (strcmp(param, "localaddr") == 0)
 	{
-		struct hostent *host;
-		host = gethostbyname((char*) value);
+		struct addrinfo hints, *results;
+		int status;
 		
-		if (!host)
-		{
-			printf("Unable to look up address\n");
-			return -1;
-		}
-		else
-			if (!host->h_addr_list[0])
-			{
-				printf("No addresses available\n");
-				return -1;
-			}
+		memset(&hints, 0, sizeof(hints));
 		
 		#ifdef IPV6
-			udp->localaddr.sin6_family = host->h_addrtype;
-			udp->localaddr.sin6_addr.s6_addr = *((unsigned long*)host->h_addr_list[0]);
+			hints.ai_family = AF_INET6;
 		#else
-			udp->localaddr.sin_family = host->h_addrtype;
-			udp->localaddr.sin_addr.s_addr = *((unsigned long*)host->h_addr_list[0]);
+			hints.ai_family = AF_INET;
 		#endif
+		
+		hints.ai_socktype = SOCK_STREAM;
+		
+		if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
+		{
+			printf("Unable to look up local address\n");
+			return -1;
+		}
+		
+		#ifdef IPV6
+			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) results->ai_addr;
+			udp->localaddr.sin6_addr = ipv6->sin6_addr;
+		#else
+			struct sockaddr_in *ipv4 = (struct sockaddr_in *) results->ai_addr;
+			udp->localaddr.sin_addr.s_addr = ipv4->sin_addr.s_addr;
+		#endif
+		
+		freeaddrinfo(results);
 	}
 	
 	if (strcmp(param, "localport") == 0)
 	{
-		udp->localaddr.sin_port = (unsigned int) htons(atoi(value));
+		#ifdef IPV6
+			udp->localaddr.sin6_port = (unsigned int) htons(atoi(value));
+		#else
+			udp->localaddr.sin_port = (unsigned int) htons(atoi(value));
+		#endif
 	}
 	
 	if (strcmp(param, "remoteaddr") == 0)
 	{
+		struct addrinfo hints, *results;
+		int status;
+		
+		memset(&hints, 0, sizeof(hints));
+		
 		#ifdef IPV6
-		#	inet_pton(AF_INET6, *(char*) value, &(udp->remoteaddr.sin_addr));
-		#elsif
-		#	inet_pton(AF_INET, *(char*) value, &(udp->remoteaddr.sin_addr));
+			hints.ai_family = AF_INET6;
+		#else
+			hints.ai_family = AF_INET;
 		#endif
 		
-		struct hostent *host;
-		host = gethostbyname((char*) value);
+		hints.ai_socktype = SOCK_STREAM;
 		
-		if (!host)
+		if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
 		{
-			printf("Unable to look up address\n");
-			return -1;
-		}
-			else
-		if (!host->h_addr_list[0])
-		{
-			printf("No addresses available\n");
+			printf("Unable to look up remote address\n");
 			return -1;
 		}
 		
-		udp->remoteaddr.sin_family = host->h_addrtype;
-		udp->remoteaddr.sin_addr.s_addr = *((unsigned long*)host->h_addr_list[0]);
+		#ifdef IPV6
+			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) results->ai_addr;
+			udp->remoteaddr.sin6_addr = ipv6->sin6_addr;
+		#else
+			struct sockaddr_in *ipv4 = (struct sockaddr_in *) results->ai_addr;
+			udp->remoteaddr.sin_addr.s_addr = ipv4->sin_addr.s_addr;
+		#endif
+		
+		freeaddrinfo(results);
 	}
 	
 	if (strcmp(param, "remoteport") == 0)
 	{
-		udp->remoteaddr.sin_port = (unsigned int) htons(atoi(value));
+		#ifdef IPV6
+			udp->remoteaddr.sin6_port = (unsigned int) htons(atoi(value));
+		#else
+			udp->remoteaddr.sin_port = (unsigned int) htons(atoi(value));
+		#endif
 	}
 	
 	return 0;
@@ -201,9 +220,9 @@ extern sigma_intf* intf_descriptor()
 	intf_udp->buffersize = (long) MAX_BUFFER_SIZE;
 
 	#ifdef IPV6
-		intf_udp->localaddr.sin_family = AF_INET6;
-		intf_udp->remoteaddr.sin_family = AF_INET6;
-	#elsif
+		intf_udp->localaddr.sin6_family = AF_INET6;
+		intf_udp->remoteaddr.sin6_family = AF_INET6;
+	#else
 		intf_udp->localaddr.sin_family = AF_INET;
 		intf_udp->remoteaddr.sin_family = AF_INET;
 	#endif
