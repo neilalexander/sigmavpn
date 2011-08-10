@@ -43,7 +43,6 @@
 #define uint64 unsigned long long
 #define noncelength 16
 #define nonceoffset (crypto_box_curve25519xsalsa20poly1305_NONCEBYTES - noncelength)
-static const int overhead = crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength;
 
 struct tai
 {
@@ -61,14 +60,12 @@ typedef struct sigma_proto_nacl
 {
 	sigma_proto baseproto;
 	
-	char encbuffer[MAX_BUFFER_SIZE + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES];
-	char decbuffer[MAX_BUFFER_SIZE + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
 	unsigned char privatekey[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];
 	unsigned char publickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
 	unsigned char precomp[crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES];
 	unsigned char encnonce[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
 	unsigned char decnonce[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
-	unsigned char taipublickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
+	
 	struct taia cdtaip, cdtaie;
 }
 sigma_proto_nacl;
@@ -156,7 +153,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 		
 		hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
 	}
-	
+		else
 	if (strcmp(param, "privatekey") == 0)
 	{
 		if (strlen(value) != crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES * 2)
@@ -173,59 +170,61 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
+	if (len + noncelength + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength > MAX_BUFFER_SIZE)
+	{
+		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
+		return -1;
+	}
+	
 	sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 	
-	unsigned char tempbuffer[len + noncelength], tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
+	unsigned char tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
 	
 	memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
 	memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
+	
+	len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
 	
 	taia_now(&inst->cdtaie);
 	taia_pack(inst->encnonce + nonceoffset, &(inst->cdtaie));
 
 	int result = crypto_box_curve25519xsalsa20poly1305_afternm(
-		tempbuffer,
+		output,
 		tempbufferinput,
-		len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES,
+		len,
 		inst->encnonce,
 		((sigma_proto_nacl*) instance)->precomp
 	);
 	
-	memcpy((void*)(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES - noncelength), inst->encnonce + nonceoffset, noncelength);
-	
-	len -= crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
-	len += noncelength;
+	memcpy(output, inst->encnonce + nonceoffset, noncelength);
 	
 	if (result)
 	{
 		fprintf(stderr, "Encryption failed (length %i, given result %i)\n", len, result);
-	}
-	
-	if ((len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
-	{
-		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
 		return -1;
 	}
 	
-	memcpy(output, tempbuffer, len + overhead);
-	
-	return len + overhead;
+	return len;
 }
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-	sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
+	if (len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES > MAX_BUFFER_SIZE)
+	{
+		fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
+		return -1;
+	}
 	
-	if (len < overhead)
+	if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength)
 	{
 		fprintf(stderr, "Short packet received: %d\n", len);
 		return 0;
 	}
 	
+	sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
+	
 	struct taia cdtaic;
 	unsigned char tempbufferout[len];
-	
-	len -= overhead;
 	
 	taia_unpack((char*)(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES - noncelength), &cdtaic);
 
@@ -235,7 +234,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(
 		tempbufferout,
 		input,
-		len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES,
+		len,
 		inst->decnonce,
 		inst->precomp
 	);
@@ -248,20 +247,16 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 		return -1;
 	}
 	
-	if ((len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
-	{
-		fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
-		return -1;
-	}
+	len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
+	memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len);
 	
-	memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
-	
-	return len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
+	return len;
 }
 
 static int proto_init(sigma_proto *instance)
 {
 	sigma_proto_nacl* inst = ((sigma_proto_nacl*) instance);
+	unsigned char taipublickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
 	
 	crypto_box_curve25519xsalsa20poly1305_beforenm(
 		inst->precomp,
@@ -272,9 +267,9 @@ static int proto_init(sigma_proto *instance)
 	memset(inst->encnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
 	memset(inst->decnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
 	
-	crypto_scalarmult_curve25519_base(inst->taipublickey, inst->privatekey);
+	crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 	
-	inst->encnonce[nonceoffset - 1] = memcmp(inst->taipublickey, inst->publickey, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES) > 0 ? 1 : 0;
+	inst->encnonce[nonceoffset - 1] = memcmp(taipublickey, inst->publickey, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES) > 0 ? 1 : 0;
 	inst->decnonce[nonceoffset - 1] = inst->encnonce[nonceoffset - 1] ? 0 : 1;
 	
 	return 0;

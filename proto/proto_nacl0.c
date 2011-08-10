@@ -38,12 +38,12 @@
 #include "../types.h"
 #include "../include/crypto_box_curve25519xsalsa20poly1305.h"
 
+unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
+
 typedef struct sigma_proto_nacl
 {
 	sigma_proto baseproto;
 	
-	char encbuffer[MAX_BUFFER_SIZE + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES];
-	char decbuffer[MAX_BUFFER_SIZE + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
 	unsigned char privatekey[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];
 	unsigned char publickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
 	unsigned char precomp[crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES];
@@ -62,7 +62,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 		
 		hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
 	}
-	
+		else
 	if (strcmp(param, "privatekey") == 0)
 	{
 		if (strlen(value) != crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES * 2)
@@ -79,10 +79,14 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-	unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
-	unsigned char tempbuffer[len], tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
+	if ((len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
+	{
+		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
+		return -1;
+	}
 	
-	memset(n, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
+	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES], tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
+	
 	memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
 	memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
 	
@@ -97,33 +101,32 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (result)
 	{
 		fprintf(stderr, "Encryption failed (length %i, given result %i)\n", len, result);
-	}
-	
-	if ((len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
-	{
-		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
 		return -1;
 	}
 	
-	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 
 	return len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
+	if ((len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
+	{
+		fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
+		return -1;
+	}
+	
 	if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES)
 	{
 		fprintf(stderr, "Short packet received: %d\n", len);
-		return 0;
+		return -1;
 	}
 	
-	unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
-	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES], tempbufferout[len];
+	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES], tempbufferout[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES];
 	
-	memset(n, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
 	memset(tempbuffer, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
-	memcpy(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, input, len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+	memcpy(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, input, len);
 
 	int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(
 		tempbufferout,
@@ -136,11 +139,6 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (result)
 	{
 		fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
-	}
-	
-	if ((len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES) > MAX_BUFFER_SIZE)
-	{
-		fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
 		return -1;
 	}
 	
@@ -156,6 +154,8 @@ static int proto_init(sigma_proto *instance)
 		((sigma_proto_nacl*) instance)->publickey,
 		((sigma_proto_nacl*) instance)->privatekey
 	);
+	
+	memset(n, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
 	
 	return 0;
 }
