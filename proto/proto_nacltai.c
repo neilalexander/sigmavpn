@@ -164,13 +164,18 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 		
 		hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
 	}
+		else
+	{
+		fprintf(stderr, "Unknown attribute '%s'\n", param);
+		return -1;
+	}
 	
 	return 0;
 }
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-	if (len + noncelength + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength > MAX_BUFFER_SIZE)
+	if (len + noncelength + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES > MAX_BUFFER_SIZE)
 	{
 		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
 		return -1;
@@ -226,9 +231,9 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	struct taia cdtaic;
 	unsigned char tempbufferout[len];
 	
-	taia_unpack((char*)(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES - noncelength), &cdtaic);
+	taia_unpack((char*) input, &cdtaic);
 
-	memcpy(inst->decnonce + nonceoffset, input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES - noncelength, noncelength);
+	memcpy(inst->decnonce + nonceoffset, input, noncelength);
 	memset(input, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 	
 	int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(

@@ -73,6 +73,11 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 		
 		hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
 	}
+		else
+	{
+		fprintf(stderr, "Unknown attribute '%s'\n", param);
+		return -1;
+	}
 	
 	return 0;
 }
@@ -104,7 +109,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 		return -1;
 	}
 	
-	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 
 	return len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
@@ -142,9 +147,9 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 		return -1;
 	}
 	
-	memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
+	memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
 	
-	return len - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
+	return len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
 
 static int proto_init(sigma_proto *instance)
