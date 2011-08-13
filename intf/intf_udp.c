@@ -39,19 +39,24 @@
 
 #include "../types.h"
 
+typedef union
+{
+	struct sockaddr_in ipv4;
+	struct sockaddr_in6 ipv6;
+}
+sigma_address;
+
+int changes;
+
 typedef struct sigma_intf_udp
 {
 	sigma_intf baseintf;
 	
-	#ifdef IPV6
-		struct sockaddr_in6 remoteaddr;
-		struct sockaddr_in6 localaddr;
-	#else
-		struct sockaddr_in remoteaddr;
-		struct sockaddr_in localaddr;
-	#endif
+	sigma_address remoteaddr;
+	sigma_address localaddr;
 	
 	long buffersize;
+	unsigned int ipv6;
 }
 sigma_intf_udp;
 
@@ -67,11 +72,10 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 	
 	int ret;
 	
-	#ifdef IPV6
+	if (udp->ipv6)
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in6));
-	#else
+	else
 		ret = sendto(udp->baseintf.filedesc, input, len, 0, (struct sockaddr*) &udp->remoteaddr, sizeof(struct sockaddr_in));
-	#endif
 
 	return ret;
 }
@@ -95,11 +99,15 @@ static int intf_init(sigma_intf* instance)
 {
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	
-	#ifdef IPV6
+	changes = 0;
+	
+	if (udp->ipv6)
 		udp->baseintf.filedesc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	#else
+	else
 		udp->baseintf.filedesc = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	#endif
+	
+	int optval = 1;
+	setsockopt(udp->baseintf.filedesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 	
 	if (udp->baseintf.filedesc < 0)
 	{
@@ -107,11 +115,14 @@ static int intf_init(sigma_intf* instance)
 		return -1;
 	}
 	
-	#ifdef IPV6
-		if (bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in6)))
-	#else
-		if (bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in)))	
-	#endif
+	int bindresult;
+	
+	if (udp->ipv6)
+		bindresult = bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in6));
+	else
+		bindresult = bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in));	
+
+	if (bindresult)
 	{
 		fprintf(stderr, "Unable to bind UDP socket\n");
 		return -1;
@@ -131,11 +142,10 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 		memset(&hints, 0, sizeof(hints));
 		
-		#ifdef IPV6
+		if (udp->ipv6)
 			hints.ai_family = AF_INET6;
-		#else
+		else
 			hints.ai_family = AF_INET;
-		#endif
 		
 		hints.ai_socktype = SOCK_STREAM;
 		
@@ -145,26 +155,52 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			return -1;
 		}
 		
-		#ifdef IPV6
+		if (udp->ipv6)
+		{
 			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) results->ai_addr;
-			udp->localaddr.sin6_addr = ipv6->sin6_addr;
-		#else
-			struct sockaddr_in *ipv4 = (struct sockaddr_in *) results->ai_addr;
-			udp->localaddr.sin_addr.s_addr = ipv4->sin_addr.s_addr;
-		#endif
+			
+			if (memcmp(&udp->localaddr.ipv6.sin6_addr, &ipv6->sin6_addr, sizeof(struct sockaddr_in6)) != 0)
+			{
+				udp->localaddr.ipv6.sin6_addr = ipv6->sin6_addr;
+				changes ++;
+			}
+		}
+			else
+		{
+			struct sockaddr_in *ipv4 = (struct sockaddr_in*) results->ai_addr;
+		
+			if (memcmp(&udp->localaddr.ipv4.sin_addr, &ipv4->sin_addr, sizeof(struct sockaddr_in)) != 0)
+			{
+				udp->localaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
+				changes ++;
+			}
+		}
 		
 		freeaddrinfo(results);
 	}
-	
+		else
 	if (strcmp(param, "localport") == 0)
 	{
-		#ifdef IPV6
-			udp->localaddr.sin6_port = (unsigned int) htons(atoi(value));
-		#else
-			udp->localaddr.sin_port = (unsigned int) htons(atoi(value));
-		#endif
+		unsigned int port = (unsigned int) htons(atoi(value));
+		
+		if (udp->ipv6)
+		{
+			if (udp->localaddr.ipv6.sin6_port != port)
+			{
+				udp->localaddr.ipv6.sin6_port = port;
+				changes ++;
+			}
+		}
+			else
+		{
+			if (udp->localaddr.ipv4.sin_port != port)
+			{
+				udp->localaddr.ipv4.sin_port = port;
+				changes ++;
+			}
+		}
 	}
-	
+		else
 	if (strcmp(param, "remoteaddr") == 0)
 	{
 		struct addrinfo hints, *results;
@@ -172,11 +208,10 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 		memset(&hints, 0, sizeof(hints));
 		
-		#ifdef IPV6
+		if (udp->ipv6)
 			hints.ai_family = AF_INET6;
-		#else
+		else
 			hints.ai_family = AF_INET;
-		#endif
 		
 		hints.ai_socktype = SOCK_STREAM;
 		
@@ -186,25 +221,79 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			return -1;
 		}
 		
-		#ifdef IPV6
+		if (udp->ipv6)
+		{
 			struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *) results->ai_addr;
-			udp->remoteaddr.sin6_addr = ipv6->sin6_addr;
-		#else
+		
+			if (memcmp(&udp->localaddr.ipv6.sin6_addr, &ipv6->sin6_addr, sizeof(struct sockaddr_in6)) != 0)
+			{
+				udp->remoteaddr.ipv6.sin6_addr = ipv6->sin6_addr;
+				changes ++;
+			}
+		}
+			else
+		{
 			struct sockaddr_in *ipv4 = (struct sockaddr_in *) results->ai_addr;
-			udp->remoteaddr.sin_addr.s_addr = ipv4->sin_addr.s_addr;
-		#endif
+
+			if (memcmp(&udp->localaddr.ipv4.sin_addr, &ipv4->sin_addr, sizeof(struct sockaddr_in)) != 0)
+			{
+				udp->remoteaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
+				changes ++;
+			}
+		}
 		
 		freeaddrinfo(results);
 	}
-	
+		else
 	if (strcmp(param, "remoteport") == 0)
 	{
-		#ifdef IPV6
-			udp->remoteaddr.sin6_port = (unsigned int) htons(atoi(value));
-		#else
-			udp->remoteaddr.sin_port = (unsigned int) htons(atoi(value));
-		#endif
+		unsigned int port = (unsigned int) htons(atoi(value));
+		
+		if (udp->ipv6)
+		{
+			if (udp->remoteaddr.ipv6.sin6_port != port)
+			{
+				udp->remoteaddr.ipv6.sin6_port = port;
+				changes ++;
+			}
+		}
+			else
+		{
+			if (udp->remoteaddr.ipv4.sin_port != port)
+			{
+				udp->remoteaddr.ipv4.sin_port = port;
+				changes ++;
+			}
+		}
 	}
+		else
+	if (strcmp(param, "ipv6") == 0)
+	{
+		udp->ipv6 = atoi(value);
+	}
+	
+	return 0;
+}
+
+static int intf_reload(sigma_intf* instance)
+{
+	if (changes == 0)
+		return 0;
+	
+	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
+	
+	printf("%i changes\n", changes);
+
+	printf("Closing down socket...\n");
+	
+	if (close(udp->baseintf.filedesc) == -1)
+	{
+		printf("Socket close failed\n");
+		return -1;
+	}
+
+	printf("Restarting protocol...\n");
+	intf_init(instance);
 	
 	return 0;
 }
@@ -217,15 +306,8 @@ extern sigma_intf* intf_descriptor()
 	intf_udp->baseintf.read = intf_read;
 	intf_udp->baseintf.write = intf_write;
 	intf_udp->baseintf.set = intf_set;
+	intf_udp->baseintf.reload = intf_reload;
 	intf_udp->buffersize = (long) MAX_BUFFER_SIZE;
-
-	#ifdef IPV6
-		intf_udp->localaddr.sin6_family = AF_INET6;
-		intf_udp->remoteaddr.sin6_family = AF_INET6;
-	#else
-		intf_udp->localaddr.sin_family = AF_INET;
-		intf_udp->remoteaddr.sin_family = AF_INET;
-	#endif
 	
 	return (sigma_intf*) intf_udp;
 }

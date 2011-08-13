@@ -36,6 +36,7 @@
 #include <sys/select.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "types.h"
 #include "modules.h"
@@ -136,9 +137,42 @@ static int handler(void* user, const char* section, const char* name, const char
 	return 0;
 }
 
+void reload()
+{
+	printf("SIGHUP received, reloading configuration...\n");
+	
+	signal(SIGHUP, reload);
+	
+	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
+	{
+        printf("Configuration file '%s' could not be parsed\n", conf->configfile);
+		return;
+    }
+	
+	pointer = sessions;
+	
+	while (pointer)
+	{			
+		if (pointer->session.proto->reload != NULL)
+			pointer->session.proto->reload(pointer->session.proto);
+		
+		if (pointer->session.local->reload != NULL)
+			pointer->session.local->reload(pointer->session.local);
+		
+		if (pointer->session.remote->reload != NULL)
+			pointer->session.remote->reload(pointer->session.remote);
+		
+		pointer = pointer->next;
+	}
+	
+	printf("Reconfiguration complete\n");
+}
+
 int main(int argc, const char** argv)
 {	
-	printf("Sigma VPN alpha.\nCopyright (c) 2011 Neil Alexander. All rights reserved.\n");
+	printf("SigmaVPN.\nCopyright (c) 2011 Neil Alexander T. All rights reserved.\n");
+	
+	signal(SIGHUP, reload);
 	
 	conf = malloc(sizeof(sigma_conf));
 	strncpy(conf->modulepath, "/usr/local/lib/sigma", 128);
@@ -193,20 +227,6 @@ int main(int argc, const char** argv)
 				fprintf(stderr, "Unknown argument '%s'\n", argv[arg]);
 		}
 	}
-	
-	/*
-	if (access(conf->modulepath) == -1)
-	{
-		printf("Module directory '%s' does not exist; specify a path with '-m'\n", conf->modulepath);
-		return -1;
-	}
-	
-	if (access(conf->configfile) == -1)
-	{
-		printf("Configuration file '%s' does not exist; specify a path with '-c'\n", conf->configfile);
-		return -1;
-	}
-	*/
 	
 	sessions = NULL;
 	pointer = NULL;
