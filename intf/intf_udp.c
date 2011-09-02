@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <errno.h>
 
 #include "../types.h"
 
@@ -98,6 +99,7 @@ static long intf_read(sigma_intf *instance, char* output, long len)
 static int intf_init(sigma_intf* instance)
 {
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
+	char errorstring[64];
 	
 	changes = 0;
 	
@@ -111,7 +113,12 @@ static int intf_init(sigma_intf* instance)
 	
 	if (udp->baseintf.filedesc < 0)
 	{
-		fprintf(stderr, "Unable to create UDP socket\n");
+		strerror_r(errno, errorstring, 64);
+		fprintf(stderr, "Unable to create UDP socket: %s\n", errorstring);
+		
+		close(udp->baseintf.filedesc);
+		udp->baseintf.filedesc = -1;
+		
 		return -1;
 	}
 	
@@ -124,7 +131,12 @@ static int intf_init(sigma_intf* instance)
 
 	if (bindresult)
 	{
-		fprintf(stderr, "Unable to bind UDP socket\n");
+		strerror_r(errno, errorstring, 64);
+		fprintf(stderr, "Unable to bind UDP socket: %s\n", errorstring);
+		
+		close(udp->baseintf.filedesc);
+		udp->baseintf.filedesc = -1;
+		
 		return -1;
 	}
 	

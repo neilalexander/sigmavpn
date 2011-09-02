@@ -360,6 +360,12 @@ int runsession(sigma_session* session)
 			
 			readvalue = session->proto->encode(session->proto, tuntapbuf, tuntapbufenc, readvalue);
 			
+			if (readvalue < 0)
+			{
+				fprintf(stderr, "%s: Left read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				return -1;
+			}
+			
 			long writevalue = session->remote->write(session->remote, tuntapbufenc, readvalue);
 			
 			if (writevalue < 0)
@@ -381,6 +387,12 @@ int runsession(sigma_session* session)
 			}
 			
 			readvalue = session->proto->decode(session->proto, udpbufenc, udpbuf, readvalue);
+			
+			if (readvalue < 0)
+			{
+				fprintf(stderr, "%s: Right read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				return -1;
+			}
 			
 			long writevalue = session->local->write(session->local, udpbuf, readvalue);
 			
