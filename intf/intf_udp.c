@@ -104,9 +104,9 @@ static int intf_init(sigma_intf* instance)
 	changes = 0;
 	
 	if (udp->ipv6)
-		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, 0);
 	else
-		udp->baseintf.filedesc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		udp->baseintf.filedesc = socket(AF_INET, SOCK_DGRAM, 0);
 	
 	int optval = 1;
 	setsockopt(udp->baseintf.filedesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
@@ -123,7 +123,7 @@ static int intf_init(sigma_intf* instance)
 	}
 	
 	int bindresult;
-	
+
 	if (udp->ipv6)
 		bindresult = bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in6));
 	else
@@ -158,7 +158,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			hints.ai_family = AF_INET6;
 		else
 			hints.ai_family = AF_INET;
-		
+
 		hints.ai_socktype = SOCK_DGRAM;
 		hints.ai_protocol = IPPROTO_UDP;
 		
@@ -174,6 +174,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			
 			if (memcmp(&udp->localaddr.ipv6.sin6_addr, &ipv6->sin6_addr, sizeof(struct sockaddr_in6)) != 0)
 			{
+				udp->localaddr.ipv6.sin6_family = AF_INET6;
 				udp->localaddr.ipv6.sin6_addr = ipv6->sin6_addr;
 				changes ++;
 			}
@@ -184,6 +185,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 			if (memcmp(&udp->localaddr.ipv4.sin_addr, &ipv4->sin_addr, sizeof(struct sockaddr_in)) != 0)
 			{
+				udp->localaddr.ipv4.sin_family = AF_INET;
 				udp->localaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
 				changes ++;
 			}
@@ -241,6 +243,8 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		
 			if (memcmp(&udp->localaddr.ipv6.sin6_addr, &ipv6->sin6_addr, sizeof(struct sockaddr_in6)) != 0)
 			{
+				
+                                udp->remoteaddr.ipv6.sin6_family = AF_INET6;
 				udp->remoteaddr.ipv6.sin6_addr = ipv6->sin6_addr;
 				changes ++;
 			}
@@ -251,6 +255,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 
 			if (memcmp(&udp->localaddr.ipv4.sin_addr, &ipv4->sin_addr, sizeof(struct sockaddr_in)) != 0)
 			{
+				udp->remoteaddr.ipv4.sin_family = AF_INET;
 				udp->remoteaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
 				changes ++;
 			}
