@@ -141,7 +141,7 @@ void reload()
 {
 	printf("SIGHUP received, reloading configuration...\n");
 	
-	signal(SIGHUP, reload);
+	// signal(SIGHUP, reload);
 	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
@@ -185,7 +185,7 @@ void reload()
 
 		pointer = pointer->next;
 	}
-	while (pointer->next != NULL);
+	while (pointer->next);
 	
 	printf("Reconfiguration complete.\n");
 }
@@ -194,7 +194,7 @@ int main(int argc, const char** argv)
 {	
 	printf("SigmaVPN.\nCopyright (c) 2011 Neil Alexander T. All rights reserved.\n");
 	
-	signal(SIGHUP, reload);
+	//signal(SIGHUP, reload);
 	
 	conf = malloc(sizeof(sigma_conf));
 	strncpy(conf->modulepath, "/usr/local/lib/sigma", 128);
@@ -267,7 +267,7 @@ int main(int argc, const char** argv)
 	pointer = sessions;
 	int threadnum = 0;
 	
-	while (pointer != NULL)
+	while (pointer)
 	{
 		if (threadnum == THREAD_MAX_COUNT)
 		{
@@ -283,20 +283,24 @@ int main(int argc, const char** argv)
 		
 		int rc = pthread_create(&threads[threadnum], 0, sessionwrapper, &pointer->session);
 
-		threadnum ++;
-		pointer = pointer->next;
-		
 		if (rc)
-		{
-			fprintf(stderr, "Thread returned %d\n", rc);
-			return -1;
-		}
+                {
+                        fprintf(stderr, "Thread returned %d\n", rc);
+                        return -1;
+                }
+
+		threadnum ++;
+
+		if (pointer->next == NULL)
+			break;
+
+		pointer = pointer->next;
 	}
 	
 	pointer = sessions;
 	threadnum = 0;
 	
-	while (pointer != NULL)
+	while (pointer)
 	{
 		pthread_join(threads[threadnum], NULL);
 		threadnum ++;
@@ -311,8 +315,7 @@ void* sessionwrapper(void* param)
 	sessionparam = (sigma_session*) param;
 	int status = 0;
 
-	while (status == 0)
-		status = runsession(sessionparam);
+	status = runsession(sessionparam);
 
 	pthread_exit(&status);
 }
