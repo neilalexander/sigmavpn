@@ -104,9 +104,9 @@ static int intf_init(sigma_intf* instance)
 	changes = 0;
 	
 	if (udp->ipv6)
-		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, 0);
+		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	else
-		udp->baseintf.filedesc = socket(AF_INET, SOCK_DGRAM, 0);
+		udp->baseintf.filedesc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	
 	int optval = 1;
 	setsockopt(udp->baseintf.filedesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
@@ -301,9 +301,9 @@ static int intf_reload(sigma_intf* instance)
 	
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	
-	printf("%i changes\n", changes);
+	//printf("%i changes\n", changes);
 
-	printf("Closing down socket...\n");
+	//printf("Closing down socket...\n");
 	
 	if (close(udp->baseintf.filedesc) == -1)
 	{
@@ -311,7 +311,7 @@ static int intf_reload(sigma_intf* instance)
 		return -1;
 	}
 
-	printf("Restarting protocol...\n");
+	//printf("Restarting protocol...\n");
 	intf_init(instance);
 	
 	return 0;

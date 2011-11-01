@@ -140,6 +140,7 @@ extern sigma_intf* intf_descriptor()
 	intf_tuntap->baseintf.read = intf_read;
 	intf_tuntap->baseintf.write = intf_write;
 	intf_tuntap->baseintf.set = intf_set;
+	intf_tuntap->baseintf.reload = NULL;
 	intf_tuntap->buffersize = (long) MAX_BUFFER_SIZE;
 	
 	return (sigma_intf*) intf_tuntap;

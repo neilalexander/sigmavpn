@@ -145,27 +145,40 @@ void reload()
 	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
-        printf("Configuration file '%s' could not be parsed\n", conf->configfile);
+		printf("Configuration file '%s' could not be parsed.\n", conf->configfile);
 		return;
-    }
-	
-	pointer = sessions;
-	
-	while (pointer)
-	{			
-		if (pointer->session.proto->reload != NULL)
-			pointer->session.proto->reload(pointer->session.proto);
-		
-		if (pointer->session.local->reload != NULL)
-			pointer->session.local->reload(pointer->session.local);
-		
-		if (pointer->session.remote->reload != NULL)
-			pointer->session.remote->reload(pointer->session.remote);
-		
-		pointer = pointer->next;
 	}
 	
-	printf("Reconfiguration complete\n");
+	pointer = sessions;
+
+	do
+	{			
+		if (pointer->session.proto->reload != NULL)
+		{
+			printf("Restarting protocol...");
+			pointer->session.proto->reload(pointer->session.proto);
+			printf(" done.\n");
+		}
+		
+		if (pointer->session.local->reload != NULL)
+		{
+			printf("Restarting local interface...");
+			pointer->session.local->reload(pointer->session.local);
+			printf(" done.\n");
+		}
+		
+		if (pointer->session.remote->reload != NULL)
+		{
+			printf("Restarting remote interface...");
+			pointer->session.remote->reload(pointer->session.remote);
+			printf(" done.\n");
+		}
+
+		pointer = pointer->next;
+	}
+	while (pointer->next != NULL);
+	
+	printf("Reconfiguration complete.\n");
 }
 
 int main(int argc, const char** argv)
@@ -233,9 +246,9 @@ int main(int argc, const char** argv)
 	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
-        printf("Configuration file '%s' could not be parsed\n", conf->configfile);
-        return 1;
-    }
+		printf("Configuration file '%s' could not be parsed\n", conf->configfile);
+		return 1;
+	}
 	
 	pthread_t threads[THREAD_MAX_COUNT];
 	//pthread_attr_t attr;
