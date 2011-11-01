@@ -104,9 +104,9 @@ static int intf_init(sigma_intf* instance)
 	changes = 0;
 	
 	if (udp->ipv6)
-		udp->baseintf.filedesc = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	else
-		udp->baseintf.filedesc = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		udp->baseintf.filedesc = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	
 	int optval = 1;
 	setsockopt(udp->baseintf.filedesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
@@ -129,7 +129,7 @@ static int intf_init(sigma_intf* instance)
 	else
 		bindresult = bind(udp->baseintf.filedesc, (struct sockaddr*) &udp->localaddr, sizeof(struct sockaddr_in));	
 
-	if (bindresult)
+	if (bindresult < 0)
 	{
 		strerror_r(errno, errorstring, 64);
 		fprintf(stderr, "Unable to bind UDP socket: %s\n", errorstring);
@@ -159,7 +159,8 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		else
 			hints.ai_family = AF_INET;
 		
-		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_protocol = IPPROTO_UDP;
 		
 		if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
 		{
@@ -224,8 +225,9 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			hints.ai_family = AF_INET6;
 		else
 			hints.ai_family = AF_INET;
-		
-		hints.ai_socktype = SOCK_STREAM;
+	
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_protocol = IPPROTO_UDP;
 		
 		if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
 		{
