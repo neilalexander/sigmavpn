@@ -316,7 +316,7 @@ static int intf_reload(sigma_intf* instance)
 
 extern sigma_intf* intf_descriptor()
 {
-	sigma_intf_udp* intf_udp = malloc(sizeof(sigma_intf_udp));
+	sigma_intf_udp* intf_udp = calloc(0, sizeof(sigma_intf_udp));
 	
 	intf_udp->baseintf.init = intf_init;
 	intf_udp->baseintf.read = intf_read;

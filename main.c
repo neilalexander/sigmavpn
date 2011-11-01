@@ -358,7 +358,7 @@ int runsession(sigma_session* session)
 			if (readvalue < 0) return readvalue;
 			continue;
 		}
-		
+
 		if (FD_ISSET(session->local->filedesc, &sockets) != 0)
 		{
 			char tuntapbuf[MAX_BUFFER_SIZE], tuntapbufenc[MAX_BUFFER_SIZE];
