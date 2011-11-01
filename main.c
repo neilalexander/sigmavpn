@@ -139,38 +139,11 @@ void reload()
 	
 	sigma_session* pointer = sessions;
 
+	char buffer = 'R';
+
 	while (pointer)
-	{			
-		if (pointer->proto->reload != NULL)
-		{
-			printf("Restarting protocol...");
-	
-			if (pointer->proto->reload(pointer->proto) == 0)
-				printf(" done.\n");
-			else
-				printf(" failed.\n");
-		}
-		
-		if (pointer->local->reload != NULL)
-		{
-			printf("Restarting local interface...");
-
-			if (pointer->local->reload(pointer->local) == 0)
-				printf(" done.\n");	
-			else
-				printf(" failed.\n");
-		}
-		
-		if (pointer->remote->reload != NULL)
-		{
-			printf("Restarting remote interface...");
-
-			if (pointer->remote->reload(pointer->remote) == 0)
-				printf(" done.\n");
-			else
-				printf(" failed.\n");
-		}
-
+	{
+		write(pointer->controlpipe[1], &buffer, 1);
 		pointer = pointer->next;
 	}
 	
@@ -180,8 +153,6 @@ void reload()
 int main(int argc, const char** argv)
 {	
 	printf("SigmaVPN.\nCopyright (c) 2011 Neil Alexander T. All rights reserved.\n");
-	
-	//signal(SIGHUP, reload);
 	
 	conf = malloc(sizeof(sigma_conf));
 	strncpy(conf->modulepath, "/usr/local/lib/sigma", 128);
@@ -257,7 +228,14 @@ int main(int argc, const char** argv)
 	
 	while (pointer)
 	{
-		int rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
+		int rc = pipe(pointer->controlpipe);
+		if (rc)
+                {
+                        fprintf(stderr, "pipe() returned %d\n", rc);
+                        return -1;
+                }
+
+		rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
 
 		if (rc)
                 {
@@ -268,6 +246,8 @@ int main(int argc, const char** argv)
                 pointer = pointer->next;
 	}
 	
+	signal(SIGHUP, reload);
+
 	pointer = sessions;
 	
 	while (pointer)
@@ -288,6 +268,21 @@ void* sessionwrapper(void* param)
 int max(int a, int b)
 {
 	return a > b ? a : b;
+}
+
+int reloadsession(sigma_session* session, char operation) {
+	if (session->proto->reload != NULL) {
+		printf("Restarting protocol...");
+		if (session->proto->reload(session->proto) == 0) printf(" done.\n"); else printf(" failed.\n");
+	}
+	if (session->local->reload != NULL) {
+		printf("Restarting local interface...");
+		if (session->local->reload(session->local) == 0) printf(" done.\n"); else printf(" failed.\n");
+	}
+	if (session->remote->reload != NULL) {
+		printf("Restarting remote interface...");
+		if (session->remote->reload(session->remote) == 0) printf(" done.\n"); else printf(" failed.\n");
+	}
 }
 
 int runsession(sigma_session* session)
@@ -331,13 +326,16 @@ int runsession(sigma_session* session)
 	}
 	
 	printf("%s: Session active\n", session->sessionname);
-	
+
 	while (1)
 	{
 		FD_ZERO(&sockets);
 		FD_SET(session->local->filedesc, &sockets);
 		FD_SET(session->remote->filedesc, &sockets);
-		int nfds = max(session->local->filedesc, session->remote->filedesc) + 1;
+
+		int nfds = max(session->local->filedesc, session->remote->filedesc);
+		nfds = max(nfds, session->controlpipe[0]);
+		nfds++;
 		
 		int len = select(nfds, &sockets, NULL, NULL, 0);
 		
@@ -345,6 +343,20 @@ int runsession(sigma_session* session)
 		{
 			fprintf(stderr, "Poll error");
 			return -1;
+		}
+
+		if (FD_ISSET(session->controlpipe[0], &sockets) != 0)
+		{
+			char buffer;
+			long readvalue = read(session->controlpipe[0], &buffer, 1);
+			if (readvalue < 0)
+			{
+				fprintf(stderr, "%s: Control read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				return -1;
+			}
+			readvalue = reloadsession(session, buffer);
+			if (readvalue < 0) return readvalue;
+			continue;
 		}
 		
 		if (FD_ISSET(session->local->filedesc, &sockets) != 0)
