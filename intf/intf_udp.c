@@ -301,17 +301,14 @@ static int intf_reload(sigma_intf* instance)
 	
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	
-	//printf("%i changes\n", changes);
-
-	//printf("Closing down socket...\n");
-	
 	if (close(udp->baseintf.filedesc) == -1)
 	{
 		printf("Socket close failed\n");
 		return -1;
 	}
 
-	//printf("Restarting protocol...\n");
+	udp->baseintf.filedesc = -1;
+
 	intf_init(instance);
 	
 	return 0;

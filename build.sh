@@ -6,6 +6,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
 	export CCFLAGS="-g"
 	export DYFLAGS="-dynamiclib"
 else
+	export CCFLAGS="-g"
 	export DYFLAGS="-shared -fPIC"
 fi
 

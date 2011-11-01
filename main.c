@@ -156,22 +156,31 @@ void reload()
 		if (pointer->session.proto->reload != NULL)
 		{
 			printf("Restarting protocol...");
-			pointer->session.proto->reload(pointer->session.proto);
-			printf(" done.\n");
+	
+			if (pointer->session.proto->reload(pointer->session.proto) == 0)
+				printf(" done.\n");
+			else
+				printf(" failed.\n");
 		}
 		
 		if (pointer->session.local->reload != NULL)
 		{
 			printf("Restarting local interface...");
-			pointer->session.local->reload(pointer->session.local);
-			printf(" done.\n");
+
+			if (pointer->session.local->reload(pointer->session.local) == 0)
+				printf(" done.\n");	
+			else
+				printf(" failed.\n");
 		}
 		
 		if (pointer->session.remote->reload != NULL)
 		{
 			printf("Restarting remote interface...");
-			pointer->session.remote->reload(pointer->session.remote);
-			printf(" done.\n");
+
+			if (pointer->session.remote->reload(pointer->session.remote) == 0)
+				printf(" done.\n");
+			else
+				printf(" failed.\n");
 		}
 
 		pointer = pointer->next;
@@ -300,7 +309,11 @@ void* sessionwrapper(void* param)
 {
 	sigma_session* sessionparam;
 	sessionparam = (sigma_session*) param;
-	int status = runsession(sessionparam);
+	int status = 0;
+
+	while (status == 0)
+		status = runsession(sessionparam);
+
 	pthread_exit(&status);
 }
 
@@ -416,6 +429,6 @@ int runsession(sigma_session* session)
 			}
 		}
 	}
-	
+
 	return 0;
 }
