@@ -44,34 +44,23 @@
 
 #define THREAD_STACK_SIZE 131072
 
-sigma_session* sessions;
-sigma_session* head;
-sigma_session* pointer;
+sigma_session* sessions = NULL;
 
 static int handler(void* user, const char* section, const char* name, const char* value)
 {
 	if (name == NULL && value == NULL)
 	{
-		sigma_session* newobject = malloc(sizeof(sigma_session));
-		strncpy(newobject->sessionname, section, 32);
-		
-		if (sessions == NULL)
-		{
-			sessions = newobject;
-			head = sessions;
-		}
-			else
-		{
-			head->next = newobject;
-			head = head->next;
-		}
+		sigma_session** newobject = &sessions;
+		while (*newobject) newobject = &((*newobject)->next);
+		*newobject = calloc(1, sizeof(sigma_session));
+		strncpy((*newobject)->sessionname, section, 32);
 	}
 		else
 	{
-		pointer = sessions;
+		sigma_session* pointer = sessions;
 		
 		while (pointer)
-		{			
+		{
 			if (strncmp(pointer->sessionname, section, 32) == 0)
 				break;
 			
@@ -148,9 +137,9 @@ void reload()
 		return;
 	}
 	
-	pointer = sessions;
+	sigma_session* pointer = sessions;
 
-	do
+	while (pointer)
 	{			
 		if (pointer->proto->reload != NULL)
 		{
@@ -184,7 +173,6 @@ void reload()
 
 		pointer = pointer->next;
 	}
-	while (pointer->next);
 	
 	printf("Reconfiguration complete.\n");
 }
@@ -249,9 +237,6 @@ int main(int argc, const char** argv)
 		}
 	}
 	
-	sessions = NULL;
-	pointer = NULL;
-	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
 		printf("Configuration file '%s' could not be parsed\n", conf->configfile);
@@ -296,13 +281,13 @@ int main(int argc, const char** argv)
 
 void* sessionwrapper(void* param)
 {
-	sigma_session* sessionparam;
-	sessionparam = (sigma_session*) param;
-	int status = 0;
-
-	status = runsession(sessionparam);
-
+	int status = runsession((sigma_session*) param);
 	pthread_exit(&status);
+}
+
+int max(int a, int b)
+{
+	return a > b ? a : b;
 }
 
 int runsession(sigma_session* session)
@@ -352,8 +337,9 @@ int runsession(sigma_session* session)
 		FD_ZERO(&sockets);
 		FD_SET(session->local->filedesc, &sockets);
 		FD_SET(session->remote->filedesc, &sockets);
+		int nfds = max(session->local->filedesc, session->remote->filedesc) + 1;
 		
-		int len = select(sizeof(sockets) * 2, &sockets, NULL, NULL, 0);
+		int len = select(nfds, &sockets, NULL, NULL, 0);
 		
 		if (len < 0)
 		{
