@@ -42,19 +42,18 @@
 #include "modules.h"
 #include "dep/ini.h"
 
-#define THREAD_MAX_COUNT 16
 #define THREAD_STACK_SIZE 131072
 
-sigma_sessionlist* sessions;
-sigma_sessionlist* head;
-sigma_sessionlist* pointer;
+sigma_session* sessions;
+sigma_session* head;
+sigma_session* pointer;
 
 static int handler(void* user, const char* section, const char* name, const char* value)
 {
 	if (name == NULL && value == NULL)
 	{
-		sigma_sessionlist* newobject = malloc(sizeof(sigma_sessionlist));
-		strncpy(newobject->session.sessionname, section, 32);
+		sigma_session* newobject = malloc(sizeof(sigma_session));
+		strncpy(newobject->sessionname, section, 32);
 		
 		if (sessions == NULL)
 		{
@@ -73,7 +72,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		while (pointer)
 		{			
-			if (strncmp(pointer->session.sessionname, section, 32) == 0)
+			if (strncmp(pointer->sessionname, section, 32) == 0)
 				break;
 			
 			pointer = pointer->next;
@@ -87,50 +86,50 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		if (strcmp(name, "proto") == 0)
 		{
-			pointer->session.proto = loadproto((char*) value);
+			pointer->proto = loadproto((char*) value);
 		}
 			else
 		if (strncmp(name, "proto_", 6) == 0)
 		{
-			if (pointer->session.proto == NULL)
+			if (pointer->proto == NULL)
 			{
-				fprintf(stderr, "%s: Parameter '%s' ignored; 'proto=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'proto=' should appear before '%s=' in the config\n", pointer->sessionname, name, name);
 				return -1;
 			}
 			
-			pointer->session.proto->set(pointer->session.proto, name + 6, value);
+			pointer->proto->set(pointer->proto, name + 6, value);
 		}
 		
 		if (strcmp(name, "peer") == 0)
 		{
-			pointer->session.remote = loadinterface((char*) value);
+			pointer->remote = loadinterface((char*) value);
 		}
 			else
 		if (strncmp(name, "peer_", 5) == 0)
 		{
-			if (pointer->session.remote == NULL)
+			if (pointer->remote == NULL)
 			{
-				fprintf(stderr, "%s: Parameter '%s' ignored; 'peer=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'peer=' should appear before '%s=' in the config\n", pointer->sessionname, name, name);
 				return -1;
 			}
 				
-			pointer->session.remote->set(pointer->session.remote, name + 5, value);
+			pointer->remote->set(pointer->remote, name + 5, value);
 		}
 		
 		if (strcmp(name, "local") == 0)
 		{
-			pointer->session.local = loadinterface((char*) value);
+			pointer->local = loadinterface((char*) value);
 		}
 			else
 		if (strncmp(name, "local_", 6) == 0)
 		{
-			if (pointer->session.local == NULL)
+			if (pointer->local == NULL)
 			{
-				fprintf(stderr, "%s: Parameter '%s' ignored; 'local=' should appear before '%s=' in the config\n", pointer->session.sessionname, name, name);
+				fprintf(stderr, "%s: Parameter '%s' ignored; 'local=' should appear before '%s=' in the config\n", pointer->sessionname, name, name);
 				return -1;
 			}
 				
-			pointer->session.local->set(pointer->session.local, name + 6, value);
+			pointer->local->set(pointer->local, name + 6, value);
 		}
 	}
 	
@@ -153,31 +152,31 @@ void reload()
 
 	do
 	{			
-		if (pointer->session.proto->reload != NULL)
+		if (pointer->proto->reload != NULL)
 		{
 			printf("Restarting protocol...");
 	
-			if (pointer->session.proto->reload(pointer->session.proto) == 0)
+			if (pointer->proto->reload(pointer->proto) == 0)
 				printf(" done.\n");
 			else
 				printf(" failed.\n");
 		}
 		
-		if (pointer->session.local->reload != NULL)
+		if (pointer->local->reload != NULL)
 		{
 			printf("Restarting local interface...");
 
-			if (pointer->session.local->reload(pointer->session.local) == 0)
+			if (pointer->local->reload(pointer->local) == 0)
 				printf(" done.\n");	
 			else
 				printf(" failed.\n");
 		}
 		
-		if (pointer->session.remote->reload != NULL)
+		if (pointer->remote->reload != NULL)
 		{
 			printf("Restarting remote interface...");
 
-			if (pointer->session.remote->reload(pointer->session.remote) == 0)
+			if (pointer->remote->reload(pointer->remote) == 0)
 				printf(" done.\n");
 			else
 				printf(" failed.\n");
@@ -259,13 +258,11 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 	
-	pthread_t threads[THREAD_MAX_COUNT];
 	//pthread_attr_t attr;
 	//pthread_attr_init(&attr);
 	//pthread_attr_setstacksize(&attr, THREAD_STACK_SIZE);
 	
-	sigma_sessionlist* pointer = sessions;
-	int threadnum = 0;
+	sigma_session* pointer = sessions;
 
 	if (pointer == NULL)
 	{
@@ -275,13 +272,7 @@ int main(int argc, const char** argv)
 	
 	while (pointer)
 	{
-		if (threadnum == THREAD_MAX_COUNT)
-		{
-			fprintf(stderr, "Maximum thread count reached; this binary only supports %i concurrent sessions\n", THREAD_MAX_COUNT);
-			return -1;
-		}
-		
-		int rc = pthread_create(&threads[threadnum], 0, sessionwrapper, &pointer->session);
+		int rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
 
 		if (rc)
                 {
@@ -289,18 +280,15 @@ int main(int argc, const char** argv)
                         return -1;
                 }
 
-		threadnum ++;
-
                 pointer = pointer->next;
 	}
 	
 	pointer = sessions;
-	threadnum = 0;
 	
 	while (pointer)
 	{
-		pthread_join(threads[threadnum], NULL);
-		threadnum ++;
+		pthread_join(pointer->thread, NULL);
+		pointer = pointer->next;
 	}
 
 	return 0;

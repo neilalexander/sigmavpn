@@ -71,15 +71,10 @@ typedef struct sigma_session
 	sigma_proto* proto;
 	sigma_intf* local;
 	sigma_intf* remote;
+	pthread_t thread;
+	struct sigma_session* next;
 }
 sigma_session;
-
-typedef struct sigma_sessionlist
-{
-	sigma_session session;
-	struct sigma_sessionlist* next;
-}
-sigma_sessionlist;
 
 void* sessionwrapper(void* param);
 int runsession(sigma_session* session);
