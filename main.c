@@ -264,8 +264,14 @@ int main(int argc, const char** argv)
 	//pthread_attr_init(&attr);
 	//pthread_attr_setstacksize(&attr, THREAD_STACK_SIZE);
 	
-	pointer = sessions;
+	sigma_sessionlist* pointer = sessions;
 	int threadnum = 0;
+
+	if (pointer == NULL)
+	{
+		fprintf(stderr, "No session data found; please check the configuration.\n");
+		return -1;
+	}
 	
 	while (pointer)
 	{
@@ -273,12 +279,6 @@ int main(int argc, const char** argv)
 		{
 			fprintf(stderr, "Maximum thread count reached; this binary only supports %i concurrent sessions\n", THREAD_MAX_COUNT);
 			return -1;
-		}
-		
-		if (pointer == NULL)
-		{
-			fprintf(stderr, "No session data found\n");
-			break;
 		}
 		
 		int rc = pthread_create(&threads[threadnum], 0, sessionwrapper, &pointer->session);
@@ -291,10 +291,7 @@ int main(int argc, const char** argv)
 
 		threadnum ++;
 
-		if (pointer->next == NULL)
-			break;
-
-		pointer = pointer->next;
+                pointer = pointer->next;
 	}
 	
 	pointer = sessions;
