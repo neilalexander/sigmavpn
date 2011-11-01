@@ -290,7 +290,7 @@ extern sigma_proto* proto_descriptor()
 	proto_nacltai->baseproto.encode = proto_encode;
 	proto_nacltai->baseproto.decode = proto_decode;
 	proto_nacltai->baseproto.set = proto_set;
-	proto_nacltai->baseproto.reload = NULL;
+	proto_nacltai->baseproto.reload = proto_init;
 	proto_nacltai->baseproto.state = 0;
 	
 	return (sigma_proto*) proto_nacltai;

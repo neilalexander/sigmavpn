@@ -175,7 +175,7 @@ extern sigma_proto* proto_descriptor()
 	proto_nacl0->baseproto.encode = proto_encode;
 	proto_nacl0->baseproto.decode = proto_decode;
 	proto_nacl0->baseproto.set = proto_set;
-	proto_nacl0->baseproto.reload = NULL;
+	proto_nacl0->baseproto.reload = proto_init;
 	proto_nacl0->baseproto.state = 0;
 	
 	return (sigma_proto*) proto_nacl0;

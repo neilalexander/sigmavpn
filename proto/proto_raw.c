@@ -60,7 +60,7 @@ extern sigma_proto* proto_descriptor()
 	proto_raw->init = proto_init;
 	proto_raw->encode = proto_encode;
 	proto_raw->decode = proto_decode;
-	proto_raw->reload = NULL;
+	proto_raw->reload = proto_init;
 	proto_raw->state = 0;
 
 	return proto_raw;

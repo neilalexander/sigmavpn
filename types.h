@@ -72,6 +72,7 @@ typedef struct sigma_session
 	sigma_intf* local;
 	sigma_intf* remote;
 	pthread_t thread;
+	int controlpipe[2];
 	struct sigma_session* next;
 }
 sigma_session;
