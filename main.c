@@ -129,8 +129,6 @@ void reload()
 {
 	printf("SIGHUP received, reloading configuration...\n");
 	
-	// signal(SIGHUP, reload);
-	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
 		printf("Configuration file '%s' could not be parsed.\n", conf->configfile);
@@ -143,7 +141,8 @@ void reload()
 
 	while (pointer)
 	{
-		write(pointer->controlpipe[1], &buffer, 1);
+		if (pointer->controlpipe[1] != 0) // ...?
+			write(pointer->controlpipe[1], &buffer, 1);
 		pointer = pointer->next;
 	}
 	
@@ -245,8 +244,6 @@ int main(int argc, const char** argv)
 
                 pointer = pointer->next;
 	}
-	
-	//signal(SIGHUP, reload);
 
 	struct sigaction act;
 	memset(&act, '\0', sizeof(struct sigaction));   
@@ -278,7 +275,8 @@ int max(int a, int b)
 	return a > b ? a : b;
 }
 
-int reloadsession(sigma_session* session, char operation) {
+int reloadsession(sigma_session* session, char operation)
+{
 	if (session->proto->reload != NULL) {
 		printf("Restarting protocol...");
 		if (session->proto->reload(session->proto) == 0) printf(" done.\n"); else printf(" failed.\n");
@@ -340,28 +338,33 @@ int runsession(sigma_session* session)
 		FD_ZERO(&sockets);
 		FD_SET(session->local->filedesc, &sockets);
 		FD_SET(session->remote->filedesc, &sockets);
+		FD_SET(session->controlpipe[0], &sockets);
 
 		int nfds = max(session->local->filedesc, session->remote->filedesc);
 		nfds = max(nfds, session->controlpipe[0]);
 		nfds++;
-		
+
 		int len = select(nfds, &sockets, NULL, NULL, 0);
-		
+
 		if (len < 0)
 		{
 			fprintf(stderr, "Poll error");
 			return -1;
 		}
 
+		printf("Event\n");
+
 		if (FD_ISSET(session->controlpipe[0], &sockets) != 0)
 		{
 			char buffer;
 			long readvalue = read(session->controlpipe[0], &buffer, 1);
+
 			if (readvalue < 0)
 			{
 				fprintf(stderr, "%s: Control read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
+
 			readvalue = reloadsession(session, buffer);
 			if (readvalue < 0) return readvalue;
 			continue;

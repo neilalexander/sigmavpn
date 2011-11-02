@@ -308,8 +308,8 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 
 static int intf_reload(sigma_intf* instance)
 {
-	if (changes == 0)
-		return 0;
+//	if (changes == 0)
+//		return 0;
 	
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	
