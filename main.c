@@ -75,7 +75,8 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		if (strcmp(name, "proto") == 0)
 		{
-			pointer->proto = loadproto((char*) value);
+			if (!pointer->proto)
+				pointer->proto = loadproto((char*) value);
 		}
 			else
 		if (strncmp(name, "proto_", 6) == 0)
@@ -91,7 +92,8 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		if (strcmp(name, "peer") == 0)
 		{
-			pointer->remote = loadinterface((char*) value);
+			if (!pointer->remote)
+				pointer->remote = loadinterface((char*) value);
 		}
 			else
 		if (strncmp(name, "peer_", 5) == 0)
@@ -107,7 +109,8 @@ static int handler(void* user, const char* section, const char* name, const char
 		
 		if (strcmp(name, "local") == 0)
 		{
-			pointer->local = loadinterface((char*) value);
+			if (!pointer->local)
+				pointer->local = loadinterface((char*) value);
 		}
 			else
 		if (strncmp(name, "local_", 6) == 0)
@@ -351,8 +354,6 @@ int runsession(sigma_session* session)
 			fprintf(stderr, "Poll error");
 			return -1;
 		}
-
-		printf("Event\n");
 
 		if (FD_ISSET(session->controlpipe[0], &sockets) != 0)
 		{
