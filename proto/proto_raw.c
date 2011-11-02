@@ -53,7 +53,7 @@ static int proto_init(sigma_proto *instance)
 
 extern sigma_proto* proto_descriptor()
 {
-	sigma_proto* proto_raw = calloc(0, sizeof(sigma_proto));
+	sigma_proto* proto_raw = calloc(1, sizeof(sigma_proto));
 	
 	proto_raw->encrypted = 0;
 	proto_raw->stateful = 0;

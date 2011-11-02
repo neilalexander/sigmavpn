@@ -51,7 +51,7 @@ static int intf_init()
 
 extern sigma_intf* intf_descriptor()
 {
-	sigma_intf* intf_dummy = calloc(0, sizeof(sigma_intf));
+	sigma_intf* intf_dummy = calloc(1, sizeof(sigma_intf));
 	
 	intf_dummy->init = intf_init;
 	intf_dummy->read = intf_read;

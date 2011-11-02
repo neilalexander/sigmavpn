@@ -167,6 +167,12 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			printf("Unable to look up local address\n");
 			return -1;
 		}
+
+		if (results == NULL)
+		{
+			printf("NULL detected!\n");
+			return -1;
+		}
 		
 		if (udp->ipv6)
 		{
@@ -234,6 +240,12 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 		if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
 		{
 			printf("Unable to look up remote address\n");
+			return -1;
+		}
+
+		if (results == NULL)
+		{
+			printf("NULL detected!\n");
 			return -1;
 		}
 		
@@ -316,7 +328,7 @@ static int intf_reload(sigma_intf* instance)
 
 extern sigma_intf* intf_descriptor()
 {
-	sigma_intf_udp* intf_udp = calloc(0, sizeof(sigma_intf_udp));
+	sigma_intf_udp* intf_udp = calloc(1, sizeof(sigma_intf_udp));
 	
 	intf_udp->baseintf.init = intf_init;
 	intf_udp->baseintf.read = intf_read;

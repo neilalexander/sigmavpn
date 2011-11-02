@@ -246,7 +246,15 @@ int main(int argc, const char** argv)
                 pointer = pointer->next;
 	}
 	
-	signal(SIGHUP, reload);
+	//signal(SIGHUP, reload);
+
+	struct sigaction act;
+	memset(&act, '\0', sizeof(struct sigaction));   
+	act.sa_sigaction = &reload;
+	act.sa_flags = SA_SIGINFO | SA_RESTART;
+
+	if (sigaction(SIGHUP, &act, NULL) < 0)
+		perror("sigaction");
 
 	pointer = sessions;
 	

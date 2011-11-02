@@ -134,7 +134,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 
 extern sigma_intf* intf_descriptor()
 {
-	sigma_intf_tuntap* intf_tuntap = calloc(0, sizeof(sigma_intf_tuntap));
+	sigma_intf_tuntap* intf_tuntap = calloc(1, sizeof(sigma_intf_tuntap));
 	
 	intf_tuntap->baseintf.init = intf_init;
 	intf_tuntap->baseintf.read = intf_read;

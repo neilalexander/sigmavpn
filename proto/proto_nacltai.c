@@ -282,7 +282,7 @@ static int proto_init(sigma_proto *instance)
 
 extern sigma_proto* proto_descriptor()
 {
-	sigma_proto_nacl* proto_nacltai = calloc(0, sizeof(sigma_proto_nacl));
+	sigma_proto_nacl* proto_nacltai = calloc(1, sizeof(sigma_proto_nacl));
 	
 	proto_nacltai->baseproto.encrypted = 1;
 	proto_nacltai->baseproto.stateful = 0;
