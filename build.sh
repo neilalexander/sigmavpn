@@ -56,4 +56,4 @@ fi
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_dummy.o intf/intf_dummy.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_tuntap.o intf/intf_tuntap.c
 gcc 	$CCFLAGS $DYFLAGS 	-o build/intf_udp.o intf/intf_udp.c
-gcc 	$CCFLAGS -ldl -lpthread -o build/sigma build/main.o build/modules.o build/types.o build/ini.o
+gcc 	$CCFLAGS -ldl -lpthread -o build/sigmavpn build/main.o build/modules.o build/types.o build/ini.o

@@ -164,8 +164,8 @@ int main(int argc, const char** argv)
 	printf("SigmaVPN.\nCopyright (c) 2011 Neil Alexander T. All rights reserved.\n");
 	
 	conf = malloc(sizeof(sigma_conf));
-	strncpy(conf->modulepath, "/usr/local/lib/sigma", 128);
-	strncpy(conf->configfile, "/usr/local/etc/sigma.conf", 128);
+	strncpy(conf->modulepath, "/usr/local/lib/sigmavpn/", 128);
+	strncpy(conf->configfile, "/usr/local/etc/sigmavpn.conf", 128);
 
 	int arg;
 	

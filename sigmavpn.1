@@ -1,0 +1,43 @@
+.Dd 2/11/11
+.Dt SigmaVPN
+.Sh NAME
+.Nm sigmavpn
+.Nd Light-weight, secure and modular VPN software
+.Sh SYNOPSIS
+.Nm
+.Op Fl c Ar config_path
+.Op Fl m Ar module_path
+.Sh DESCRIPTION
+.Nm
+is light-weight software that allows easy creation of VPN tunnels.
+It is designed to run with a low footprint.
+.Pp
+.Pp
+The following parameters can be given to
+.Nm
+at runtime: 
+.Bl -tag -width -indent
+.It Fl c
+Path to the configuration file. If not specified, the default
+.Ar /usr/local/etc/sigmavpn.conf
+is assumed.
+.It Fl m
+Path to the module directory. If not specified, the default
+.Ar /usr/local/lib/sigmavpn/
+is assumed. 
+.El
+.Pp
+                 
+.Sh FILES
+.Bl -tag -width "/usr/local/etc/sigmavpn.conf" -compact
+.It Pa /usr/local/etc/sigmavpn.conf
+Configuration file. Information about tunnels are placed in this file.
+.El
+.Sh SEE ALSO
+Google Code:
+.Ar http://code.google.com/p/sigmavpn/
+
+Github:
+.Ar http://github.com/neilalexander/sigmavpn/
+.Sh AUTHOR
+Neil Alexander T <neilalexander@frozenriver.net>, with contributions from Ivo Smits <ivo@ufo-net.nl>.
