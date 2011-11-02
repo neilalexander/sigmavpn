@@ -132,6 +132,23 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	return 0;
 }
 
+static int intf_reload(sigma_intf* instance)
+{
+        sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
+
+        if (close(tuntap->baseintf.filedesc) == -1)
+        {
+                printf("Interface close failed\n");
+                return -1;
+        }
+
+        tuntap->baseintf.filedesc = -1;
+
+        intf_init(instance);
+
+        return 0;
+}
+
 extern sigma_intf* intf_descriptor()
 {
 	sigma_intf_tuntap* intf_tuntap = calloc(1, sizeof(sigma_intf_tuntap));
@@ -140,7 +157,7 @@ extern sigma_intf* intf_descriptor()
 	intf_tuntap->baseintf.read = intf_read;
 	intf_tuntap->baseintf.write = intf_write;
 	intf_tuntap->baseintf.set = intf_set;
-	intf_tuntap->baseintf.reload = NULL;
+	intf_tuntap->baseintf.reload = intf_reload;
 	intf_tuntap->buffersize = (long) MAX_BUFFER_SIZE;
 	
 	return (sigma_intf*) intf_tuntap;

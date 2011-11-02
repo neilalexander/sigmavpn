@@ -239,18 +239,18 @@ int main(int argc, const char** argv)
 	{
 		int rc = pipe(pointer->controlpipe);
 		if (rc)
-                {
+		{
                         fprintf(stderr, "pipe() returned %d\n", rc);
                         return -1;
-                }
+		}
 
 		rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
 
 		if (rc)
-                {
-                        fprintf(stderr, "Thread returned %d\n", rc);
-                        return -1;
-                }
+		{
+			fprintf(stderr, "Thread returned %d\n", rc);
+			return -1;
+		}
 
                 pointer = pointer->next;
 	}
@@ -287,7 +287,7 @@ int max(int a, int b)
 
 int reloadsession(sigma_session* session, char operation)
 {
-	if (session->proto->reload != NULL) {
+	if (session->proto->reload != NULL){
 		printf("Restarting protocol...");
 		if (session->proto->reload(session->proto) == 0) printf(" done.\n"); else printf(" failed.\n");
 	}
@@ -385,7 +385,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "%s: Left read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				fprintf(stderr, "%s: Local read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -393,7 +393,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "%s: Left read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				fprintf(stderr, "%s: Local read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -401,7 +401,7 @@ int runsession(sigma_session* session)
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "%s: Left write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
+				fprintf(stderr, "%s: Local write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
 				return -1;
 			}
 		}
@@ -413,7 +413,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "%s: Right read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				fprintf(stderr, "%s: Remote read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -421,7 +421,7 @@ int runsession(sigma_session* session)
 			
 			if (readvalue < 0)
 			{
-				fprintf(stderr, "%s: Right read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+				fprintf(stderr, "%s: Remote read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
 				return -1;
 			}
 			
@@ -429,7 +429,7 @@ int runsession(sigma_session* session)
 			
 			if (writevalue < 0)
 			{
-				fprintf(stderr, "%s: Right write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
+				fprintf(stderr, "%s: Remote write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
 				return -1;
 			}
 		}
