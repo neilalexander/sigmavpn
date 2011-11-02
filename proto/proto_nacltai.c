@@ -217,7 +217,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES > MAX_BUFFER_SIZE)
 	{
 		fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
-		return -1;
+		return 0;
 	}
 	
 	if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength)
@@ -249,7 +249,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (result)
 	{
 		fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
-		return -1;
+		return 0;
 	}
 	
 	len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
