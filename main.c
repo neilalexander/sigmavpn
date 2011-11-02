@@ -51,7 +51,15 @@ static int handler(void* user, const char* section, const char* name, const char
 	if (name == NULL && value == NULL)
 	{
 		sigma_session** newobject = &sessions;
-		while (*newobject) newobject = &((*newobject)->next);
+
+		while (*newobject)
+		{
+			if (strncmp((*newobject)->sessionname, section, 32) == 0)
+				return;
+
+			newobject = &((*newobject)->next);
+		}
+
 		*newobject = calloc(1, sizeof(sigma_session));
 		strncpy((*newobject)->sessionname, section, 32);
 	}
@@ -130,7 +138,7 @@ static int handler(void* user, const char* section, const char* name, const char
 
 void reload()
 {
-	printf("SIGHUP received, reloading configuration...\n");
+	printf("Reloading configuration...\n");
 	
 	if (ini_parse(conf->configfile, handler, (void*) NULL) < 0)
 	{
@@ -144,12 +152,11 @@ void reload()
 
 	while (pointer)
 	{
-		if (pointer->controlpipe[1] != 0) // ...?
-			write(pointer->controlpipe[1], &buffer, 1);
+		write(pointer->controlpipe[1], &buffer, 1);
 		pointer = pointer->next;
 	}
-	
-	printf("Reconfiguration complete.\n");
+
+	printf("Configuration reloaded.\n");
 }
 
 int main(int argc, const char** argv)
