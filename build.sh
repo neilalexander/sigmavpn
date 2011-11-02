@@ -37,12 +37,12 @@ then
 	tar -xf nacl-20110221.tar --strip-components 1
 	./do
 	cd ../../
-	ABI=`tmp/nacl/build/*/bin/okabi | head -n 1`
-	HOST=`hostname -s`
+	NACLDIR="tmp/nacl/build/`hostname | sed 's/\..*//' | tr -cd '[a-z][A-Z][0-9]'`"
+	ABI=`"${NACLDIR}/bin/okabi" | head -n 1`
 	mkdir lib/
 	mkdir include/
-	cp -r "tmp/nacl/build/${HOST}/lib/${ABI}/" lib/
-	cp -r "tmp/nacl/build/${HOST}/include/${ABI}/" include/
+	cp ${NACLDIR}/lib/${ABI}/* lib/
+	cp ${NACLDIR}/include/${ABI}/* include/
 fi
 
 if [ -f "./include/crypto_box_curve25519xsalsa20poly1305.h" ]

@@ -40,14 +40,14 @@
 
 #include "../types.h"
 
+int changes;
+
 typedef union
 {
 	struct sockaddr_in ipv4;
 	struct sockaddr_in6 ipv6;
 }
 sigma_address;
-
-int changes;
 
 typedef struct sigma_intf_udp
 {
@@ -101,7 +101,7 @@ static int intf_init(sigma_intf* instance)
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	char errorstring[64];
 	
-	changes = 0;
+	int changes = 0;
 	
 	if (udp->ipv6)
 		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
