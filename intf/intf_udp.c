@@ -40,8 +40,6 @@
 
 #include "../types.h"
 
-int changes;
-
 typedef union
 {
 	struct sockaddr_in ipv4;
@@ -100,8 +98,6 @@ static int intf_init(sigma_intf* instance)
 {
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	char errorstring[64];
-	
-	int changes = 0;
 	
 	if (udp->ipv6)
 		udp->baseintf.filedesc = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
@@ -182,7 +178,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			{
 				udp->localaddr.ipv6.sin6_family = AF_INET6;
 				udp->localaddr.ipv6.sin6_addr = ipv6->sin6_addr;
-				changes ++;
 			}
 		}
 			else
@@ -193,7 +188,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			{
 				udp->localaddr.ipv4.sin_family = AF_INET;
 				udp->localaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
-				changes ++;
 			}
 		}
 		
@@ -209,7 +203,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			if (udp->localaddr.ipv6.sin6_port != port)
 			{
 				udp->localaddr.ipv6.sin6_port = port;
-				changes ++;
 			}
 		}
 			else
@@ -217,7 +210,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			if (udp->localaddr.ipv4.sin_port != port)
 			{
 				udp->localaddr.ipv4.sin_port = port;
-				changes ++;
 			}
 		}
 	}
@@ -258,7 +250,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 				
                                 udp->remoteaddr.ipv6.sin6_family = AF_INET6;
 				udp->remoteaddr.ipv6.sin6_addr = ipv6->sin6_addr;
-				changes ++;
 			}
 		}
 			else
@@ -269,7 +260,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			{
 				udp->remoteaddr.ipv4.sin_family = AF_INET;
 				udp->remoteaddr.ipv4.sin_addr.s_addr = ipv4->sin_addr.s_addr;
-				changes ++;
 			}
 		}
 		
@@ -285,7 +275,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			if (udp->remoteaddr.ipv6.sin6_port != port)
 			{
 				udp->remoteaddr.ipv6.sin6_port = port;
-				changes ++;
 			}
 		}
 			else
@@ -293,7 +282,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 			if (udp->remoteaddr.ipv4.sin_port != port)
 			{
 				udp->remoteaddr.ipv4.sin_port = port;
-				changes ++;
 			}
 		}
 	}
@@ -308,9 +296,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 
 static int intf_reload(sigma_intf* instance)
 {
-//	if (changes == 0)
-//		return 0;
-	
 	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 	
 	if (close(udp->baseintf.filedesc) == -1)
