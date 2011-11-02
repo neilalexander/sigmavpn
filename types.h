@@ -28,6 +28,7 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <pthread.h>
 #define MAX_BUFFER_SIZE 1546
 
 typedef struct sigma_conf
