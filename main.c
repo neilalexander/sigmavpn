@@ -48,6 +48,9 @@ sigma_session* sessions = NULL;
 
 static int handler(void* user, const char* section, const char* name, const char* value)
 {
+	if (section[0] == '!')
+		return;
+
 	if (name == NULL && value == NULL)
 	{
 		sigma_session** newobject = &sessions;
