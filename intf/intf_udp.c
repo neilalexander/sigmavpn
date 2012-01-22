@@ -53,9 +53,11 @@ typedef struct sigma_intf_udp
 	
 	sigma_address remoteaddr;
 	sigma_address localaddr;
+	sigma_address lastrecvaddr;
 	
 	long buffersize;
 	unsigned int ipv6;
+	int remotefloat;
 }
 sigma_intf_udp;
 
@@ -68,6 +70,10 @@ static long intf_write(sigma_intf *instance, char* input, long len)
 		fprintf(stderr, "UDP socket is not accessible\n");
 		return -1;
 	}
+
+	if (udp->remoteaddr.ipv4.sin_port == 0 &&
+		udp->remoteaddr.ipv6.sin6_port == 0)
+		return 0;
 	
 	int ret;
 	
@@ -88,10 +94,43 @@ static long intf_read(sigma_intf *instance, char* output, long len)
 		fprintf(stderr, "UDP socket is not accessible\n");
 		return -1;
 	}
+
+	int addrlen;
 	
-	len = recv(udp->baseintf.filedesc, output, udp->buffersize, 0);
+	if (udp->ipv6)
+		addrlen = sizeof(struct sockaddr_in6);
+	else
+		addrlen = sizeof(struct sockaddr_in);
+
+	len = recvfrom(udp->baseintf.filedesc, output, udp->buffersize, 0, (struct sockaddr*) &udp->lastrecvaddr, &addrlen);
 	
 	return len;
+}
+
+static void intf_updateremote(sigma_intf *instance)
+{
+	sigma_intf_udp* udp = (sigma_intf_udp*) instance;
+
+	if (udp->remotefloat == 0)
+		return;
+
+	if (memcmp(&udp->remoteaddr, &udp->lastrecvaddr, sizeof(sigma_address)) == 0)
+		return;
+
+	memcpy(&udp->remoteaddr, &udp->lastrecvaddr, sizeof(sigma_address));
+
+	if (udp->ipv6)
+	{
+		char* outip[64];        
+                inet_ntop(AF_INET, (struct sockaddr_in6*) &udp->remoteaddr.ipv6.sin6_addr, outip, sizeof(outip));
+                printf("Remote endpoint is now [%s]:%i\n", outip, ntohs(udp->remoteaddr.ipv6.sin6_port));
+	}
+		else
+	{
+		char* outip[32];	
+		inet_ntop(AF_INET, (struct sockaddr_in*) &udp->remoteaddr.ipv4.sin_addr, outip, sizeof(outip));
+		printf("Remote endpoint is now %s:%i\n", outip, ntohs(udp->remoteaddr.ipv4.sin_port));
+	}
 }
 
 static int intf_init(sigma_intf* instance)
@@ -135,7 +174,7 @@ static int intf_init(sigma_intf* instance)
 		
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -290,6 +329,11 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 	{
 		udp->ipv6 = atoi(value);
 	}
+		else
+	if (strcmp(param, "remotefloat") == 0)
+	{
+		udp->remotefloat = atoi(value);
+	}
 	
 	return 0;
 }
@@ -320,6 +364,7 @@ extern sigma_intf* intf_descriptor()
 	intf_udp->baseintf.write = intf_write;
 	intf_udp->baseintf.set = intf_set;
 	intf_udp->baseintf.reload = intf_reload;
+	intf_udp->baseintf.updateremote = intf_updateremote;
 	intf_udp->buffersize = (long) MAX_BUFFER_SIZE;
 	
 	return (sigma_intf*) intf_udp;

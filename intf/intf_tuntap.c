@@ -84,7 +84,8 @@ static int intf_init(sigma_intf* instance)
 {
 	sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 	
-	if (!tuntap->nodename) strcpy(tuntap->nodename, "/dev/tun0");
+	if (!tuntap->nodename)
+		strcpy(tuntap->nodename, "/dev/tun0");
 	
 	#ifdef __linux__
 		struct ifreq ifr;
@@ -158,6 +159,7 @@ extern sigma_intf* intf_descriptor()
 	intf_tuntap->baseintf.write = intf_write;
 	intf_tuntap->baseintf.set = intf_set;
 	intf_tuntap->baseintf.reload = intf_reload;
+	intf_tuntap->baseintf.updateremote = 0;
 	intf_tuntap->buffersize = (long) MAX_BUFFER_SIZE;
 	
 	return (sigma_intf*) intf_tuntap;

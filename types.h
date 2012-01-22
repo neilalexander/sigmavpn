@@ -46,8 +46,9 @@ typedef struct sigma_intf
 	int (*set) ();
 	long (*read) ();
 	long (*write) ();
+	void (*updateremote) ();
 	int (*reload) ();
-	
+       	
 	int filedesc;
 }
 sigma_intf;

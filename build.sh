@@ -1,6 +1,6 @@
 #!/bin/bash
-rm -rf build
-mkdir build
+#rm -rf build
+#mkdir build
 
 if [ "$(uname -s)" = "Darwin" ]; then
 	export CCFLAGS="-g"
