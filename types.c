@@ -49,3 +49,4 @@ void hex2bin(unsigned char* dest, unsigned char* src, int count)
 		src++; dest++;
 	}
 }
+

@@ -87,3 +87,4 @@ sigma_intf* loadinterface(char* intfname)
 	
 	return intf;
 }
+

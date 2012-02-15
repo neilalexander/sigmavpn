@@ -121,13 +121,13 @@ static void intf_updateremote(sigma_intf *instance)
 
 	if (udp->ipv6)
 	{
-		char* outip[64];        
+		char outip[64];        
                 inet_ntop(AF_INET, (struct sockaddr_in6*) &udp->remoteaddr.ipv6.sin6_addr, outip, sizeof(outip));
                 printf("Remote endpoint is now [%s]:%i\n", outip, ntohs(udp->remoteaddr.ipv6.sin6_port));
 	}
 		else
 	{
-		char* outip[32];	
+		char outip[32];	
 		inet_ntop(AF_INET, (struct sockaddr_in*) &udp->remoteaddr.ipv4.sin_addr, outip, sizeof(outip));
 		printf("Remote endpoint is now %s:%i\n", outip, ntohs(udp->remoteaddr.ipv4.sin_port));
 	}
