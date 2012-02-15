@@ -43,6 +43,7 @@ then
 	curl -O -q http://hyperelliptic.org/nacl/nacl-20110221.tar.bz2
 	bunzip2 -d nacl-20110221.tar.bz2
 	tar -xf nacl-20110221.tar --strip-components 1
+	sed -i -e "s/$/ -fPIC/" okcompilers/c
 	./do
 	cd ../../
 	NACLDIR="tmp/nacl/build/`hostname | sed 's/\..*//' | tr -cd '[a-z][A-Z][0-9]'`"
