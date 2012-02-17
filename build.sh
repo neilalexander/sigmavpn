@@ -1,5 +1,4 @@
 #!/bin/bash
-#rm -rf build
 mkdir -p build
 
 if [ "$(uname -s)" = "Darwin" ];
@@ -10,12 +9,17 @@ then
 elif [ "$(uname -s)" = "FreeBSD" ];
 then
 	export CCFLAGS="-g"
-	export DYFLAGS="-shared -fPIC"
+	export DYFLAGS="-shared"
 	export LDFLAGS="-lpthread"
 else
 	export CCFLAGS="-g"
-	export DYFLAGS="-shared -fPIC"
+	export DYFLAGS="-shared"
 	export LDFLAGS="-ldl -lpthread"
+fi
+
+if [ "$(uname -p)" = "amd64" ];
+then
+	export CCFLAGS="${CCFLAGS} -fPIC"
 fi
 
 gcc 	$CCFLAGS -c 		-o build/main.o main.c
@@ -43,7 +47,13 @@ then
 	curl -O -q http://hyperelliptic.org/nacl/nacl-20110221.tar.bz2
 	bunzip2 -d nacl-20110221.tar.bz2
 	tar -xf nacl-20110221.tar --strip-components 1
-	sed -i -e "s/$/ -fPIC/" okcompilers/c
+
+	if [ "$(uname -p)" = "amd64" ];
+	then
+		rm -r crypto_onetimeauth/poly1305/amd64
+		sed -i -e "s/$/ -fPIC/" okcompilers/c
+	fi
+
 	./do
 	cd ../../
 	NACLDIR="tmp/nacl/build/`hostname | sed 's/\..*//' | tr -cd '[a-z][A-Z][0-9]'`"

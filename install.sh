@@ -10,5 +10,5 @@ cp build/sigmavpn /usr/bin/
 
 if [ -f "build/naclkeypair" ]
 then
-	cp build/naclkeypair /usr/sbin
+	cp build/naclkeypair /usr/bin
 fi
