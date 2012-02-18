@@ -435,6 +435,11 @@ int runsession(sigma_session* session)
 				fprintf(stderr, "%s: Remote write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
 				return -1;
 			}
+
+			if (session->remote->updateremote != 0)
+			{
+				session->remote->updateremote(session->remote);
+			}
 		}
 	}
 
