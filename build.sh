@@ -17,7 +17,7 @@ else
 	export LDFLAGS="-ldl -lpthread"
 fi
 
-if [ "$(uname -p)" = "amd64" ];
+if [ "$(uname -m)" = "amd64" -o "$(uname -m)" = "x86_64" ];
 then
 	export CCFLAGS="${CCFLAGS} -fPIC"
 fi
@@ -48,7 +48,7 @@ then
 	bunzip2 -d nacl-20110221.tar.bz2
 	tar -xf nacl-20110221.tar --strip-components 1
 
-	if [ "$(uname -p)" = "amd64" ];
+	if [ "$(uname -m)" = "amd64" -o "$(uname -m)" = "x86_64" ];
 	then
 		rm -r crypto_onetimeauth/poly1305/amd64
 		sed -i -e "s/$/ -fPIC/" okcompilers/c
@@ -58,8 +58,8 @@ then
 	cd ../../
 	NACLDIR="tmp/nacl/build/`hostname | sed 's/\..*//' | tr -cd '[a-z][A-Z][0-9]'`"
 	ABI=`"${NACLDIR}/bin/okabi" | head -n 1`
-	mkdir lib/
-	mkdir include/
+	mkdir -p lib/
+	mkdir -p include/
 	cp ${NACLDIR}/lib/${ABI}/* lib/
 	cp ${NACLDIR}/include/${ABI}/* include/
 fi
