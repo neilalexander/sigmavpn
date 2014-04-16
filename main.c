@@ -49,7 +49,7 @@ sigma_session* sessions = NULL;
 static int handler(void* user, const char* section, const char* name, const char* value)
 {
 	if (section[0] == '!')
-		return;
+		return 0;
 
 	if (name == NULL && value == NULL)
 	{
@@ -58,7 +58,7 @@ static int handler(void* user, const char* section, const char* name, const char
 		while (*newobject)
 		{
 			if (strncmp((*newobject)->sessionname, section, 32) == 0)
-				return;
+				return 0;
 
 			newobject = &((*newobject)->next);
 		}
