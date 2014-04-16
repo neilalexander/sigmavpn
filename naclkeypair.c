@@ -29,9 +29,9 @@
 //
 
 #include <stdio.h>
-#include "include/crypto_box_curve25519xsalsa20poly1305.h"
+#include <sodium.h>
 
-int main()
+int main(void)
 {
 	unsigned char pk[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
 	unsigned char sk[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];

@@ -35,10 +35,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sodium.h>
 
 #include "../types.h"
-#include "../include/crypto_box_curve25519xsalsa20poly1305.h"
-#include "../include/crypto_scalarmult_curve25519.h"
 
 #define uint64 unsigned long long
 #define noncelength 16

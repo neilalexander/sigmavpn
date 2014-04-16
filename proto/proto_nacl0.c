@@ -34,9 +34,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sodium.h>
 
 #include "../types.h"
-#include "../include/crypto_box_curve25519xsalsa20poly1305.h"
 
 unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
 
