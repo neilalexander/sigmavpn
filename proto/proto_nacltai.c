@@ -150,7 +150,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 			return -1;
 		}
 		
-		hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
+		hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
 	}
 		else
 	if (strcmp(param, "privatekey") == 0)
@@ -161,7 +161,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 			return -1;
 		}
 		
-		hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
+		hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
 	}
 		else
 	{

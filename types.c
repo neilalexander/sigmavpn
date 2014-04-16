@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 
-void hex2bin(unsigned char* dest, unsigned char* src, int count)
+void hex2bin(unsigned char* dest, const char* src, int count)
 {
 	int i;
 	
