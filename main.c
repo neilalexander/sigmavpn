@@ -438,7 +438,7 @@ int runsession(sigma_session* session)
                 return -1;
             }
 
-            if (session->remote->updateremote != 0)
+            if (session->remote->updateremote != NULL)
             {
                 session->remote->updateremote(session->remote);
             }
