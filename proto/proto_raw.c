@@ -4,17 +4,17 @@
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
-// 
+//
 //  Redistribution and use in source and binary forms, with
 //  or without modification, are permitted provided that the following
 //  conditions are met:
-// 
+//
 //  - Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //  - Redistributions in binary form must reproduce the above copyright notice,
 //    this list of conditions and the following disclaimer in the documentation
 //    and/or other materials provided with the distribution.
-// 
+//
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 //  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 //  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -36,32 +36,32 @@
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-	memcpy(output, input, len);
-	return len;
+    memcpy(output, input, len);
+    return len;
 }
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-	memcpy(output, input, len);
-	return len;
+    memcpy(output, input, len);
+    return len;
 }
 
 static int proto_init(sigma_proto *instance)
 {
-	return 0;
+    return 0;
 }
 
 extern sigma_proto* proto_descriptor()
 {
-	sigma_proto* proto_raw = calloc(1, sizeof(sigma_proto));
-	
-	proto_raw->encrypted = 0;
-	proto_raw->stateful = 0;
-	proto_raw->init = proto_init;
-	proto_raw->encode = proto_encode;
-	proto_raw->decode = proto_decode;
-	proto_raw->reload = NULL;
-	proto_raw->state = 0;
+    sigma_proto* proto_raw = calloc(1, sizeof(sigma_proto));
 
-	return proto_raw;
+    proto_raw->encrypted = 0;
+    proto_raw->stateful = 0;
+    proto_raw->init = proto_init;
+    proto_raw->encode = proto_encode;
+    proto_raw->decode = proto_decode;
+    proto_raw->reload = NULL;
+    proto_raw->state = 0;
+
+    return proto_raw;
 }
