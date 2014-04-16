@@ -7,13 +7,13 @@ SODIUM_CPPFLAGS ?= -I/usr/local/include
 SODIUM_LDFLAGS ?= -L/usr/local/lib -lsodium
 CFLAGS ?= -O2
 CPPFLAGS += $(SODIUM_CPPFLAGS)
-LDFLAGS += $(SODIUM_LDFLAGS)
+LDFLAGS += $(SODIUM_LDFLAGS) -pthread
 DYLIB_CFLAGS ?= $(CFLAGS) -shared
 
 TARGETS_OBJS = dep/ini.o main.o modules.o naclkeypair.o types.o
 TARGETS_BIN = naclkeypair sigmavpn
 TARGETS_MODULES = proto/proto_raw.o proto/proto_nacl0.o proto/proto_nacltai.o \
-intf/intf_dummy.o intf/intf_tuntap.o intf/intf_udp.o
+	intf/intf_dummy.o intf/intf_tuntap.o intf/intf_udp.o
 
 TARGETS = $(TARGETS_OBJS) $(TARGETS_BIN) $(TARGETS_MODULES)
 
