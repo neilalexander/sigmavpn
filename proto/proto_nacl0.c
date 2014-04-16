@@ -89,10 +89,19 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 		fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES), MAX_BUFFER_SIZE);
 		return -1;
 	}
+	    
+	unsigned char *tempbuffer, *tempbufferinput;
+    
+    if ((tempbuffer = calloc(len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, 1)) == NULL) {
+        perror("calloc");
+        return -1;
+    }
+    if ((tempbufferinput = calloc(len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, 1)) == NULL) {        
+        perror("calloc");
+        free(tempbuffer);
+        return -1;
+    }
 	
-	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES], tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
-	
-	memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
 	memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
 	
 	int result = crypto_box_curve25519xsalsa20poly1305_afternm(
@@ -106,11 +115,15 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (result)
 	{
 		fprintf(stderr, "Encryption failed (length %i, given result %i)\n", len, result);
+        free(tempbuffer);
+        free(tempbufferinput);
 		return -1;
 	}
 	
 	memcpy(output, tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
-
+    free(tempbuffer);
+    free(tempbufferinput);
+    
 	return len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES - crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
 
@@ -128,9 +141,18 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 		return 0;
 	}
 	
-	unsigned char tempbuffer[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES], tempbufferout[len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES];
+	unsigned char *tempbuffer, *tempbufferout;
 	
-	memset(tempbuffer, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+    if ((tempbuffer = calloc(len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, 1)) == NULL) {
+        perror("calloc");
+        return 0;
+    }
+    if ((tempbufferout = calloc(len + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, 1)) == NULL) {
+        perror("calloc");
+        free(tempbuffer);
+        return 0;
+    }
+    
 	memcpy(tempbuffer + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, input, len);
 
 	int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(
@@ -144,10 +166,14 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 	if (result)
 	{
 		fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
+        free(tempbuffer);
+        free(tempbufferout);
 		return 0;
 	}
 	
 	memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+    free(tempbuffer);
+    free(tempbufferout);
 	
 	return len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES;
 }
