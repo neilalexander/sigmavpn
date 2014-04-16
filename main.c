@@ -302,6 +302,7 @@ int reloadsession(sigma_session* session, char operation)
 		printf("Restarting remote interface...");
 		if (session->remote->reload(session->remote) == 0) printf(" done.\n"); else printf(" failed.\n");
 	}
+    return 0;
 }
 
 int runsession(sigma_session* session)
