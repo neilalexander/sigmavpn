@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "types.h"
 #include "modules.h"
