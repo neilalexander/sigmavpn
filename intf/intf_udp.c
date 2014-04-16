@@ -33,6 +33,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -96,7 +97,7 @@ static long intf_read(sigma_intf *instance, char* output, long len)
 		return -1;
 	}
 
-	int addrlen;
+	socklen_t addrlen;
 	
 	if (udp->ipv6)
 		addrlen = sizeof(struct sockaddr_in6);
