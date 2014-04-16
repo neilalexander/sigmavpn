@@ -190,7 +190,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 	len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
 	
 	taia_now(&inst->cdtaie);
-	taia_pack(inst->encnonce + nonceoffset, &(inst->cdtaie));
+	taia_pack((char *) inst->encnonce + nonceoffset, &(inst->cdtaie));
 
 	int result = crypto_box_curve25519xsalsa20poly1305_afternm(
 		output,
