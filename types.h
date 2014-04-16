@@ -33,8 +33,8 @@
 
 typedef struct sigma_conf
 {
-    char modulepath[128];
-    char configfile[128];
+    char modulepath[4096];
+    char configfile[4096];
 }
 sigma_conf;
 
