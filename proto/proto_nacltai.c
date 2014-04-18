@@ -251,7 +251,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     int i;
     for (i = 0; i < 10; i ++)
     {
-        if (memcmp(inst->decnonce, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
+        if (memcmp(tempbufferout, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
         {
             fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
             return 0;
@@ -263,7 +263,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         taicheck ++;
     }
 
-    if (memcmp(inst->decnonce, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+    if (memcmp(tempbufferout, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
     {
         fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
         return 0;
