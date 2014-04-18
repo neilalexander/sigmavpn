@@ -248,7 +248,8 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     struct taia *taicheck = &tailog[0];
     struct taia *taioldest = tailog;
 
-    for (int i = 0; i < 10; i ++)
+    int i;
+    for (i = 0; i < 10; i ++)
     {
         if (memcmp(inst->decnonce, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
         {
