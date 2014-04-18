@@ -296,7 +296,7 @@ static int proto_init(sigma_proto *instance)
 
     memset(inst->encnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
     memset(inst->decnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-    memset(tailog, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES * 10);
+    tailog = calloc(10, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
 
     crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 
