@@ -249,21 +249,21 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     struct taia *taioldest = tailog;
 
     int i;
-    for (i = 0; i < 10; i ++)
+    for (i = 0; i < 5; i ++)
     {
-        if (memcmp(tempbufferout, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
+        if (memcmp(input, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
         {
             fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
             return 0;
         }
 
-        if (memcmp(taicheck, taioldest, 16) < 0)
+        if (memcmp(taicheck, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
             taioldest = taicheck;
 
         taicheck ++;
     }
 
-    if (memcmp(tempbufferout, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+    if (memcmp(input, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
     {
         fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
         return 0;
