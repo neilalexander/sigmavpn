@@ -1,11 +1,11 @@
 
 /* inih -- simple .INI file parser
- 
+
  inih is released under the New BSD license (see LICENSE.txt). Go to the project
  home page for more info:
- 
+
  http://code.google.com/p/inih/
- 
+
  */
 
 #include <stdio.h>
@@ -66,76 +66,76 @@ int ini_parse_file(FILE* file,
     char line[MAX_LINE];
     char section[MAX_SECTION] = "";
     char prev_name[MAX_NAME] = "";
-	
+
     char* start;
     char* end;
     char* name;
     char* value;
     int lineno = 0;
     int error = 0;
-	
+
     /* Scan through file line by line */
     while (fgets(line, sizeof(line), file) != NULL) {
         lineno++;
         start = lskip(rstrip(line));
-		
+
 #if INI_ALLOW_MULTILINE
         if (*prev_name && *start && start > line) {
             /* Non-black line with leading whitespace, treat as continuation
-			 of previous name's value (as per Python ConfigParser). */
+             of previous name's value (as per Python ConfigParser). */
             if (!handler(user, section, prev_name, start) && !error)
                 error = lineno;
         }
         else
 #endif
-			if (*start == ';' || *start == '#') {
-				/* Per Python ConfigParser, allow '#' comments at start of line */
-			}
-			else if (*start == '[') {
-				/* A "[section]" line */
-				end = find_char_or_comment(start + 1, ']');
-				if (*end == ']') {
-					*end = '\0';
-					strncpy0(section, start + 1, sizeof(section));
-					*prev_name = '\0';
-					
-					// copy&paste code to alert the handler function when a new section
-					// has been opened in the INI file
-					if (!handler(user, section, NULL, NULL) && !error)
-						error = lineno;
-				}
-				else if (!error) {
-					/* No ']' found on section line */
-					error = lineno;
-				}
-			}
-			else if (*start && *start != ';') {
-				/* Not a comment, must be a name[=:]value pair */
-				end = find_char_or_comment(start, '=');
-				if (*end != '=') {
-					end = find_char_or_comment(start, ':');
-				}
-				if (*end == '=' || *end == ':') {
-					*end = '\0';
-					name = rstrip(start);
-					value = lskip(end + 1);
-					end = find_char_or_comment(value, '\0');
-					if (*end == ';')
-						*end = '\0';
-					rstrip(value);
-					
-					/* Valid name[=:]value pair found, call handler */
-					strncpy0(prev_name, name, sizeof(prev_name));
-					if (!handler(user, section, name, value) && !error)
-						error = lineno;
-				}
-				else if (!error) {
-					/* No '=' or ':' found on name[=:]value line */
-					error = lineno;
-				}
-			}
+            if (*start == ';' || *start == '#') {
+                /* Per Python ConfigParser, allow '#' comments at start of line */
+            }
+            else if (*start == '[') {
+                /* A "[section]" line */
+                end = find_char_or_comment(start + 1, ']');
+                if (*end == ']') {
+                    *end = '\0';
+                    strncpy0(section, start + 1, sizeof(section));
+                    *prev_name = '\0';
+
+                    // copy&paste code to alert the handler function when a new section
+                    // has been opened in the INI file
+                    if (!handler(user, section, NULL, NULL) && !error)
+                        error = lineno;
+                }
+                else if (!error) {
+                    /* No ']' found on section line */
+                    error = lineno;
+                }
+            }
+            else if (*start && *start != ';') {
+                /* Not a comment, must be a name[=:]value pair */
+                end = find_char_or_comment(start, '=');
+                if (*end != '=') {
+                    end = find_char_or_comment(start, ':');
+                }
+                if (*end == '=' || *end == ':') {
+                    *end = '\0';
+                    name = rstrip(start);
+                    value = lskip(end + 1);
+                    end = find_char_or_comment(value, '\0');
+                    if (*end == ';')
+                        *end = '\0';
+                    rstrip(value);
+
+                    /* Valid name[=:]value pair found, call handler */
+                    strncpy0(prev_name, name, sizeof(prev_name));
+                    if (!handler(user, section, name, value) && !error)
+                        error = lineno;
+                }
+                else if (!error) {
+                    /* No '=' or ':' found on name[=:]value line */
+                    error = lineno;
+                }
+            }
     }
-	
+
     return error;
 }
 
@@ -146,7 +146,7 @@ int ini_parse(const char* filename,
 {
     FILE* file;
     int error;
-	
+
     file = fopen(filename, "r");
     if (!file)
         return -1;
