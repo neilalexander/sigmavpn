@@ -55,6 +55,8 @@ struct taia
     unsigned long atto;
 };
 
+struct taia *tailog;
+
 typedef struct sigma_proto_nacl
 {
     sigma_proto baseproto;
@@ -243,6 +245,29 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         inst->precomp
     );
 
+    struct taia *taicheck = &tailog[0];
+    struct taia *taioldest = tailog;
+
+    for (int i = 0; i < 10; i ++)
+    {
+        if (memcmp(inst->decnonce, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
+        {
+            fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
+            return 0;
+        }
+
+        if (memcmp(taicheck, taioldest, 16) < 0)
+            taioldest = taicheck;
+
+        taicheck ++;
+    }
+
+    if (memcmp(inst->decnonce, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+    {
+        fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
+        return 0;
+    }
+
     inst->cdtaip = cdtaic;
 
     if (result)
@@ -270,6 +295,7 @@ static int proto_init(sigma_proto *instance)
 
     memset(inst->encnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
     memset(inst->decnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
+    memset(tailog, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES * 10);
 
     crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 
