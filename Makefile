@@ -5,9 +5,9 @@ LIBEXECDIR ?= $(INSTALLDIR)/lib/sigmavpn
 
 SODIUM_CPPFLAGS ?= -I/usr/local/include
 SODIUM_LDFLAGS ?= -L/usr/local/lib -lsodium
-CFLAGS ?= -O2
+CFLAGS ?= -O2 -fPIC
 CPPFLAGS += $(SODIUM_CPPFLAGS)
-LDFLAGS += $(SODIUM_LDFLAGS) -pthread
+LDFLAGS += $(SODIUM_LDFLAGS) -pthread -ldl
 DYLIB_CFLAGS ?= $(CFLAGS) -shared
 
 TARGETS_OBJS = dep/ini.o main.o modules.o naclkeypair.o types.o
