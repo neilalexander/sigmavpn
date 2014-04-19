@@ -83,17 +83,6 @@ void* sessionwrapper(void* param);
 int runsession(sigma_session* session);
 
 extern sigma_proto* proto_descriptor();
-static int proto_init();
-static int proto_set(sigma_proto *instance, char* param, char* value);
-static int proto_reload(sigma_proto *instance);
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
-
 extern sigma_intf* intf_descriptor();
-static int intf_init();
-static int intf_set(sigma_intf *instance, char* param, void* value);
-static int intf_reload(sigma_intf *instance);
-static long intf_write(sigma_intf *instance, char* input, long len);
-static long intf_read(sigma_intf *instance, char* output, long len);
 
 void hex2bin(unsigned char* dest, const char* src, int count);

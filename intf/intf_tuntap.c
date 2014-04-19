@@ -36,6 +36,7 @@
 #include <sys/ioctl.h>
 
 #include "../types.h"
+#include "../intf.h"
 
 #ifdef linux
 #include <net/if.h>

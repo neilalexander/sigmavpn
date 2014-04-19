@@ -38,6 +38,7 @@
 #include <sodium.h>
 
 #include "../types.h"
+#include "../proto.h"
 
 #define uint64 unsigned long long
 #define noncelength 16
@@ -313,6 +314,11 @@ static int proto_init(sigma_proto *instance)
     return 0;
 }
 
+static int proto_reload(sigma_proto *instance)
+{
+    return proto_init(instance);
+}
+
 extern sigma_proto* proto_descriptor()
 {
     sigma_proto_nacl* proto_nacltai = calloc(1, sizeof(sigma_proto_nacl));
@@ -323,7 +329,7 @@ extern sigma_proto* proto_descriptor()
     proto_nacltai->baseproto.encode = proto_encode;
     proto_nacltai->baseproto.decode = proto_decode;
     proto_nacltai->baseproto.set = proto_set;
-    proto_nacltai->baseproto.reload = proto_init;
+    proto_nacltai->baseproto.reload = proto_reload;
     proto_nacltai->baseproto.state = 0;
 
     return (sigma_proto*) proto_nacltai;

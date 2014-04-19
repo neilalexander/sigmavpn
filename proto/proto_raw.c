@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "../types.h"
+#include "../proto.h"
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
@@ -51,6 +52,16 @@ static int proto_init(sigma_proto *instance)
     return 0;
 }
 
+static int proto_set(sigma_proto* instance, char* param, char* value)
+{
+    return 0;
+}
+
+static int proto_reload(sigma_proto *instance)
+{
+    return 0;
+}
+
 extern sigma_proto* proto_descriptor()
 {
     sigma_proto* proto_raw = calloc(1, sizeof(sigma_proto));
@@ -60,7 +71,8 @@ extern sigma_proto* proto_descriptor()
     proto_raw->init = proto_init;
     proto_raw->encode = proto_encode;
     proto_raw->decode = proto_decode;
-    proto_raw->reload = NULL;
+    proto_raw->reload = proto_reload;
+    proto_raw->set = proto_set;
     proto_raw->state = 0;
 
     return proto_raw;

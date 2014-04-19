@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include "../types.h"
+#include "../intf.h"
 
 typedef union
 {
@@ -187,8 +188,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
     if (strcmp(param, "localaddr") == 0)
     {
         struct addrinfo hints, *results;
-        int status;
-
         memset(&hints, 0, sizeof(hints));
 
         if (udp->ipv6)
@@ -258,8 +257,6 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
     if (strcmp(param, "remoteaddr") == 0)
     {
         struct addrinfo hints, *results;
-        int status;
-
         memset(&hints, 0, sizeof(hints));
 
         if (udp->ipv6)

@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "../types.h"
+#include "../intf.h"
 
 static long intf_write(sigma_intf *instance, char* input, long len)
 {
@@ -44,7 +45,17 @@ static long intf_read(sigma_intf *instance, char* output, long len)
     return len;
 }
 
+static int intf_set(sigma_intf *instance, char* param, void* value)
+{
+    return 0;
+}
+
 static int intf_init()
+{
+    return 0;
+}
+
+static int intf_reload(sigma_intf *instance)
 {
     return 0;
 }
@@ -56,7 +67,8 @@ extern sigma_intf* intf_descriptor()
     intf_dummy->init = intf_init;
     intf_dummy->read = intf_read;
     intf_dummy->write = intf_write;
-//  intf_dummy->set = intf_set;
+    intf_dummy->set = intf_set;
+    intf_dummy->reload = intf_reload;
 
     return intf_dummy;
 }

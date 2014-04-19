@@ -37,6 +37,7 @@
 #include <sodium.h>
 
 #include "../types.h"
+#include "../proto.h"
 
 unsigned char n[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
 
@@ -191,6 +192,11 @@ static int proto_init(sigma_proto *instance)
     return 0;
 }
 
+static int proto_reload(sigma_proto *instance)
+{
+    return proto_init(instance);
+}
+
 extern sigma_proto* proto_descriptor()
 {
     sigma_proto_nacl* proto_nacl0 = calloc(1, sizeof(sigma_proto_nacl));
@@ -201,7 +207,7 @@ extern sigma_proto* proto_descriptor()
     proto_nacl0->baseproto.encode = proto_encode;
     proto_nacl0->baseproto.decode = proto_decode;
     proto_nacl0->baseproto.set = proto_set;
-    proto_nacl0->baseproto.reload = proto_init;
+    proto_nacl0->baseproto.reload = proto_reload;
     proto_nacl0->baseproto.state = 0;
 
     return (sigma_proto*) proto_nacl0;
