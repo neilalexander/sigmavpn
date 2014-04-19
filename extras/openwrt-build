@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 mkdir -p staging
+
+export VERSION="0.3"
 
 export INSTALLDIR=staging
 export BINDIR=$INSTALLDIR/usr/bin
@@ -21,11 +23,11 @@ cd staging
 
 echo "2.0" > debian-binary
 
-echo << EOF > control
+cat << EOF > control
 Package: sigmavpn
 Priority: optional
 Section: misc
-Version: 0.3
+Version: $VERSION
 Architecture: ar71xx
 Source: https://github.com/neilalexander/sigmavpn
 Depends: libsodium(>=0.4.5),libpthread
@@ -37,4 +39,11 @@ EOF
 tar cvzf data.tar.gz etc usr
 tar cvzf control.tar.gz control
 
-ar -r ../sigmavpn-openwrt-ar71xx.opk *.tar.gz debian-binary
+REV=`git rev-parse HEAD`
+
+if [ "$REV" == "" ];
+then
+	REV="$VERSION-rel"
+fi
+
+ar -r ../sigmavpn-openwrt-ar71xx-$REV.opk *.tar.gz debian-binary
