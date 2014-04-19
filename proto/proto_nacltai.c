@@ -56,6 +56,7 @@ struct taia
 };
 
 struct taia *tailog;
+struct taia lasttai;
 
 typedef struct sigma_proto_nacl
 {
@@ -192,6 +193,12 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
     len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
 
     taia_now(&inst->cdtaie);
+
+    if (memcmp(&inst->cdtaie, &lasttai, sizeof(struct taia)) == 0)
+        inst->cdtaie.atto ++;
+
+    memcpy(&lasttai, &inst->cdtaie, sizeof(struct taia));
+
     taia_pack((char *) inst->encnonce + nonceoffset, &(inst->cdtaie));
 
     int result = crypto_box_curve25519xsalsa20poly1305_afternm(
