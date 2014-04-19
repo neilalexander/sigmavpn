@@ -49,7 +49,7 @@ intf/intf_udp.o: intf/intf_udp.c
 	$(CC) $(CPPFLAGS) $(DYLIB_CFLAGS) intf/intf_udp.c -o intf/intf_udp.o
 
 naclkeypair: naclkeypair.o
-	$(CC) $(LDFLAGS) -o naclkeypair naclkeypair.o
+	$(CC) $(LDFLAGS) $(SODIUM_LDFLAGS) -o naclkeypair naclkeypair.o
 
 sigmavpn: main.o modules.o types.o dep/ini.o
 	$(CC) $(LDFLAGS) $(SODIUM_LDFLAGS) -o sigmavpn main.o modules.o types.o dep/ini.o
