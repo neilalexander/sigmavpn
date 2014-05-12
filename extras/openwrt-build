@@ -20,6 +20,9 @@ make install
 make clean
 
 cd staging
+mkdir etc/init.d/
+cp ../extras/openwrt-init etc/init.d/sigmavpn
+chmod +x etc/init.d/sigmavpn
 
 echo "2.0" > debian-binary
 

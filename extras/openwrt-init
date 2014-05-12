@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+# SigmaVPN init script
+# Copyright (C) 2014 Neil Alexander T
+
+START=90
+STOP=15
+EXTRA_COMMANDS="reload"
+
+start()
+{
+        sigmavpn \
+                -c /etc/sigmavpn.conf \
+                -m /usr/lib/sigmavpn \
+                1> /tmp/log/sigmavpn.log \
+                2> /tmp/log/sigmavpn.err.log &
+}
+
+stop()
+{
+        killall sigmavpn
+}
+
+reload()
+{
+        killall -HUP sigmavpn
+}

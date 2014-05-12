@@ -99,8 +99,9 @@ static int intf_init(sigma_intf* instance)
         }
 
         strcpy(ifr.ifr_name, tuntap->nodename);
-        ifr.ifr_flags = tuntap->tunmode ? IFF_TUN : IFF_TAP;
-        ifr.ifr_flags |= tuntap->protocolinfo ? 0 : IFF_NO_PI;
+        ifr.ifr_flags = tuntap->tunmode == 1 ? IFF_TUN : IFF_TAP;
+        ifr.ifr_flags |= tuntap->protocolinfo == 1 ? 0 : IFF_NO_PI;
+	ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
 
         if (ioctl(tuntap->baseintf.filedesc, TUNSETIFF, (void *) &ifr) < 0)
         {
