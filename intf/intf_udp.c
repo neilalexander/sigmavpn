@@ -181,7 +181,7 @@ static int intf_init(sigma_intf* instance)
     return 0;
 }
 
-static int intf_set(sigma_intf* instance, char* param, void* value)
+static int intf_set(sigma_intf* instance, char* param, char* value)
 {
     sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 
@@ -198,7 +198,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_protocol = IPPROTO_UDP;
 
-        if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
+        if (getaddrinfo(value, NULL, &hints, &results) != 0)
         {
             printf("Unable to look up local address\n");
             return -1;
@@ -267,7 +267,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_protocol = IPPROTO_UDP;
 
-        if (getaddrinfo((char*) value, NULL, &hints, &results) != 0)
+        if (getaddrinfo(value, NULL, &hints, &results) != 0)
         {
             printf("Unable to look up remote address\n");
             return -1;
@@ -285,8 +285,7 @@ static int intf_set(sigma_intf* instance, char* param, void* value)
 
             if (memcmp(&udp->localaddr.ipv6.sin6_addr, &ipv6->sin6_addr, sizeof(struct sockaddr_in6)) != 0)
             {
-
-                                udp->remoteaddr.ipv6.sin6_family = AF_INET6;
+                udp->remoteaddr.ipv6.sin6_family = AF_INET6;
                 udp->remoteaddr.ipv6.sin6_addr = ipv6->sin6_addr;
             }
         }

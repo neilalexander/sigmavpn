@@ -28,7 +28,6 @@ install: all
 	mkdir -p $(BINDIR) $(SYSCONFDIR) $(LIBEXECDIR)
 	cp $(TARGETS_BIN) $(BINDIR)
 	cp $(TARGETS_MODULES) $(LIBEXECDIR)
-	touch $(SYSCONFDIR)/sigmavpn.conf
 
 proto/proto_raw.o: proto/proto_raw.c
 	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS) proto/proto_raw.c -o proto/proto_raw.o

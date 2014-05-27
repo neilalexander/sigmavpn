@@ -29,7 +29,7 @@
 //
 
 #include <pthread.h>
-#define MAX_BUFFER_SIZE 1546
+#define MAX_BUFFER_SIZE 1500
 
 typedef struct sigma_conf
 {

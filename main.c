@@ -244,8 +244,8 @@ int main(int argc, const char** argv)
         int rc = pipe(pointer->controlpipe);
         if (rc)
         {
-                        fprintf(stderr, "pipe() returned %d\n", rc);
-                        return -1;
+                fprintf(stderr, "pipe() returned %d\n", rc);
+                return -1;
         }
 
         rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
@@ -256,7 +256,7 @@ int main(int argc, const char** argv)
             return -1;
         }
 
-                pointer = pointer->next;
+        pointer = pointer->next;
     }
 
     struct sigaction act;

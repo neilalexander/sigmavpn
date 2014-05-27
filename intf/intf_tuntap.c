@@ -86,32 +86,42 @@ static int intf_init(sigma_intf* instance)
     sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 
     if (!tuntap->nodename)
-        strcpy(tuntap->nodename, "/dev/tun0");
+        strcpy(tuntap->nodename, "/dev/tap0");
 
     #ifdef __linux__
-        struct ifreq ifr;
-        memset(&ifr, 0, sizeof(ifr));
-
         if ((tuntap->baseintf.filedesc = open("/dev/net/tun", O_RDWR)) < 0)
         {
             fprintf(stderr, "Unable to find /dev/net/tun\n");
             return -1;
         }
 
-        strcpy(ifr.ifr_name, tuntap->nodename);
-        ifr.ifr_flags = tuntap->tunmode == 1 ? IFF_TUN : IFF_TAP;
-        ifr.ifr_flags |= tuntap->protocolinfo == 1 ? 0 : IFF_NO_PI;
+        struct ifreq ifr;
+        memset(&ifr, 0, sizeof(ifr));
+
+	// Set interface name
+        strncpy(ifr.ifr_name, tuntap->nodename, IFNAMSIZ);
+
+	// TUN or TAP interface?
+       	ifr.ifr_flags = tuntap->tunmode == 1 ? IFF_TUN : IFF_TAP;
+
+	// Enable or disable proto info for TUN mode
+	if (tuntap->protocolinfo == 0 && tuntap->tunmode == 1)
+	        ifr.ifr_flags |= IFF_NO_PI;
+
+	// Set interface as up
 	ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
 
         if (ioctl(tuntap->baseintf.filedesc, TUNSETIFF, (void *) &ifr) < 0)
         {
-            fprintf(stderr, "Unable to configure tuntap device\n");
+            fprintf(stderr, "Unable to configure tuntap device: ");
+	    perror("ioctl");
             return -1;
         }
     #else
         if ((tuntap->baseintf.filedesc = open(tuntap->nodename, O_RDWR)) < 0)
         {
-            fprintf(stderr, "Unable to open tuntap device '%s'\n", tuntap->nodename);
+            fprintf(stderr, "Unable to open tuntap device '%s': ", tuntap->nodename);
+            perror("ioctl");
             return -1;
         }
     #endif
@@ -119,18 +129,18 @@ static int intf_init(sigma_intf* instance)
     return 0;
 }
 
-static int intf_set(sigma_intf* instance, char* param, void* value)
+static int intf_set(sigma_intf* instance, char* param, char* value)
 {
     sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 
     if (strcmp(param, "interface") == 0)
-        memcpy(tuntap->nodename, (char*) value, 16);
+        memcpy(tuntap->nodename, value, 16);
 
     if (strcmp(param, "tunmode") == 0)
-        tuntap->tunmode = *(int*) value;
+        tuntap->tunmode = atoi(value);
 
     if (strcmp(param, "protocolinfo") == 0)
-        tuntap->protocolinfo = *(int*) value;
+        tuntap->protocolinfo = atoi(value);
 
     return 0;
 }

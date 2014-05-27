@@ -45,7 +45,7 @@ static long intf_read(sigma_intf *instance, char* output, long len)
     return len;
 }
 
-static int intf_set(sigma_intf *instance, char* param, void* value)
+static int intf_set(sigma_intf *instance, char* param, char* value)
 {
     return 0;
 }
