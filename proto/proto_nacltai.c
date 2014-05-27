@@ -178,12 +178,6 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    if (len + noncelength + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES > MAX_BUFFER_SIZE)
-    {
-        fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
-        return -1;
-    }
-
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
     unsigned char tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
@@ -223,12 +217,6 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    if (len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES > MAX_BUFFER_SIZE)
-    {
-        fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
-        return 0;
-    }
-
     if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength)
     {
         fprintf(stderr, "Short packet received: %d\n", len);
