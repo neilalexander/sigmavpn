@@ -64,9 +64,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
     if (!tuntap->filedesc < 0)
         return -1;
 
-    len = write(tuntap->baseintf.filedesc, input, tuntap->buffersize);
-
-    return len;
+    return write(tuntap->baseintf.filedesc, input, len);
 }
 
 static long intf_read(sigma_intf *instance, char* output, long len)
@@ -76,9 +74,7 @@ static long intf_read(sigma_intf *instance, char* output, long len)
     if (!tuntap->filedesc < 0)
         return -1;
 
-    len = read(tuntap->baseintf.filedesc, output, tuntap->buffersize);
-
-    return len;
+    return read(tuntap->baseintf.filedesc, output, len);
 }
 
 static int intf_init(sigma_intf* instance)
@@ -107,9 +103,6 @@ static int intf_init(sigma_intf* instance)
 	// Enable or disable proto info for TUN mode
 	if (tuntap->protocolinfo == 0 && tuntap->tunmode == 1)
 	        ifr.ifr_flags |= IFF_NO_PI;
-
-	// Set interface as up
-	ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
 
         if (ioctl(tuntap->baseintf.filedesc, TUNSETIFF, (void *) &ifr) < 0)
         {
@@ -172,7 +165,6 @@ extern sigma_intf* intf_descriptor()
     intf_tuntap->baseintf.set = intf_set;
     intf_tuntap->baseintf.reload = intf_reload;
     intf_tuntap->baseintf.updateremote = 0;
-    intf_tuntap->buffersize = (long) MAX_BUFFER_SIZE;
 
     return (sigma_intf*) intf_tuntap;
 }

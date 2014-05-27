@@ -105,7 +105,7 @@ static long intf_read(sigma_intf *instance, char* output, long len)
     else
         addrlen = sizeof(struct sockaddr_in);
 
-    len = recvfrom(udp->baseintf.filedesc, output, udp->buffersize, 0, (struct sockaddr*) &udp->lastrecvaddr, &addrlen);
+    len = recvfrom(udp->baseintf.filedesc, output, len, 0, (struct sockaddr*) &udp->lastrecvaddr, &addrlen);
 
     return len;
 }
@@ -241,16 +241,12 @@ static int intf_set(sigma_intf* instance, char* param, char* value)
         if (udp->ipv6)
         {
             if (udp->localaddr.ipv6.sin6_port != port)
-            {
                 udp->localaddr.ipv6.sin6_port = port;
-            }
         }
             else
         {
             if (udp->localaddr.ipv4.sin_port != port)
-            {
                 udp->localaddr.ipv4.sin_port = port;
-            }
         }
     }
         else
@@ -310,16 +306,12 @@ static int intf_set(sigma_intf* instance, char* param, char* value)
         if (udp->ipv6)
         {
             if (udp->remoteaddr.ipv6.sin6_port != port)
-            {
                 udp->remoteaddr.ipv6.sin6_port = port;
-            }
         }
             else
         {
             if (udp->remoteaddr.ipv4.sin_port != port)
-            {
                 udp->remoteaddr.ipv4.sin_port = port;
-            }
         }
     }
         else
@@ -363,7 +355,6 @@ extern sigma_intf* intf_descriptor()
     intf_udp->baseintf.set = intf_set;
     intf_udp->baseintf.reload = intf_reload;
     intf_udp->baseintf.updateremote = intf_updateremote;
-    intf_udp->buffersize = (long) MAX_BUFFER_SIZE;
 
     return (sigma_intf*) intf_udp;
 }
