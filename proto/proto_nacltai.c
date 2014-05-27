@@ -185,7 +185,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
     memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
     memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
 
-    len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
+    len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + noncelength;
 
     taia_now(&inst->cdtaie);
 
@@ -273,7 +273,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         return 0;
     }
 
-    len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
+    len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + noncelength;
     memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len);
 
     return len;
