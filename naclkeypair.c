@@ -38,7 +38,7 @@ int main(void)
 
     crypto_box_curve25519xsalsa20poly1305_keypair(pk, sk);
 
-    int i;
+    unsigned int i;
 
     printf("PRIVATE KEY: ");
 
@@ -51,5 +51,7 @@ int main(void)
         printf("%02x", pk[i]);
 
     printf("\n");
+
+    return 0;
 }
 

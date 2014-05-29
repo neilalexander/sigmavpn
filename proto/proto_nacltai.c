@@ -178,12 +178,6 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    if (len + noncelength + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES > MAX_BUFFER_SIZE)
-    {
-        fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
-        return -1;
-    }
-
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
     unsigned char tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
@@ -191,7 +185,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
     memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
     memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
 
-    len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + noncelength;
+    len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
 
     taia_now(&inst->cdtaie);
 
@@ -223,13 +217,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    if (len - crypto_box_curve25519xsalsa20poly1305_ZEROBYTES > MAX_BUFFER_SIZE)
-    {
-        fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", len, MAX_BUFFER_SIZE);
-        return 0;
-    }
-
-    if (len < crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES + noncelength)
+    if (len < crypto_box_curve25519xsalsa20poly1305_ZEROBYTES)
     {
         fprintf(stderr, "Short packet received: %d\n", len);
         return 0;
@@ -259,7 +247,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     int i;
     for (i = 0; i < 5; i ++)
     {
-        if (memcmp(input, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
+        if (memcmp(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
         {
             fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
             return 0;
@@ -271,7 +259,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         taicheck ++;
     }
 
-    if (memcmp(input, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+    if (memcmp(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
     {
         fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
         return 0;
@@ -285,7 +273,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         return 0;
     }
 
-    len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES + noncelength;
+    len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
     memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len);
 
     return len;

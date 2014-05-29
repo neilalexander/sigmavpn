@@ -37,28 +37,43 @@
 
 static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    memcpy(output, input, len);
-    return len;
+    if (instance->state == 1)
+    {
+        memcpy(output, input, len);
+        return len;
+    }
+
+    return -1;
 }
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    memcpy(output, input, len);
-    return len;
+    if (instance->state == 1)
+    {
+        memcpy(output, input, len);
+        return len;
+    }
+
+    return -1;
 }
 
 static int proto_init(sigma_proto *instance)
 {
+    instance->state = 1;
     return 0;
 }
 
 static int proto_set(sigma_proto* instance, char* param, char* value)
 {
+    if (strcmp(param, "state") == 0)
+        instance->state = atoi(value);
+
     return 0;
 }
 
 static int proto_reload(sigma_proto *instance)
 {
+    instance->state = 1;
     return 0;
 }
 

@@ -38,6 +38,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "types.h"
 #include "modules.h"
@@ -51,6 +52,8 @@ static int handler(void* user, const char* section, const char* name, const char
 {
     if (section[0] == '!')
         return 0;
+
+    (void) user;
 
     if (name == NULL && value == NULL)
     {
@@ -156,7 +159,9 @@ void reload()
 
     while (pointer)
     {
-        write(pointer->controlpipe[1], &buffer, 1);
+        if (write(pointer->controlpipe[1], &buffer, 1) < 0)
+		perror("write");
+
         pointer = pointer->next;
     }
 
@@ -244,8 +249,8 @@ int main(int argc, const char** argv)
         int rc = pipe(pointer->controlpipe);
         if (rc)
         {
-                fprintf(stderr, "pipe() returned %d\n", rc);
-                return -1;
+            fprintf(stderr, "pipe() returned %d\n", rc);
+            return -1;
         }
 
         rc = pthread_create(&(pointer->thread), 0, sessionwrapper, pointer);
@@ -291,18 +296,30 @@ int max(int a, int b)
 
 int reloadsession(sigma_session* session, char operation)
 {
-    if (session->proto->reload != NULL){
-        printf("Restarting protocol...");
-        if (session->proto->reload(session->proto) == 0) printf(" done.\n"); else printf(" failed.\n");
+    switch (operation)
+    {
+        default:
+            if (session->proto->reload != NULL)
+            {
+                printf("Restarting protocol...");
+                if (session->proto->reload(session->proto) == 0) printf(" done.\n"); else printf(" failed.\n");
+            }
+
+            if (session->local->reload != NULL)
+            {
+                printf("Restarting local interface...");
+                if (session->local->reload(session->local) == 0) printf(" done.\n"); else printf(" failed.\n");
+            }
+
+            if (session->remote->reload != NULL)
+            {
+                printf("Restarting remote interface...");
+                if (session->remote->reload(session->remote) == 0) printf(" done.\n"); else printf(" failed.\n");
+            }
+
+            break;
     }
-    if (session->local->reload != NULL) {
-        printf("Restarting local interface...");
-        if (session->local->reload(session->local) == 0) printf(" done.\n"); else printf(" failed.\n");
-    }
-    if (session->remote->reload != NULL) {
-        printf("Restarting remote interface...");
-        if (session->remote->reload(session->remote) == 0) printf(" done.\n"); else printf(" failed.\n");
-    }
+
     return 0;
 }
 

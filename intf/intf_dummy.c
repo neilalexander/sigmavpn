@@ -36,7 +36,6 @@
 
 static long intf_write(sigma_intf *instance, char* input, long len)
 {
-    printf("Dummy output: %s\n", input);
     return len;
 }
 
@@ -50,7 +49,7 @@ static int intf_set(sigma_intf *instance, char* param, char* value)
     return 0;
 }
 
-static int intf_init()
+static int intf_init(sigma_intf *instance)
 {
     return 0;
 }
@@ -69,6 +68,7 @@ extern sigma_intf* intf_descriptor()
     intf_dummy->write = intf_write;
     intf_dummy->set = intf_set;
     intf_dummy->reload = intf_reload;
+    intf_dummy->state = 0;
 
     return intf_dummy;
 }
