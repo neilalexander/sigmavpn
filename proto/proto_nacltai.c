@@ -42,7 +42,7 @@
 
 #define uint64 unsigned long long
 #define noncelength 16
-#define nonceoffset (crypto_box_curve25519xsalsa20poly1305_NONCEBYTES - noncelength)
+#define nonceoffset (crypto_box_NONCEBYTES - noncelength)
 
 struct tai
 {
@@ -63,11 +63,11 @@ typedef struct sigma_proto_nacl
 {
     sigma_proto baseproto;
 
-    unsigned char privatekey[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];
-    unsigned char publickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
-    unsigned char precomp[crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES];
-    unsigned char encnonce[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
-    unsigned char decnonce[crypto_box_curve25519xsalsa20poly1305_NONCEBYTES];
+    unsigned char privatekey[crypto_box_SECRETKEYBYTES];
+    unsigned char publickey[crypto_box_PUBLICKEYBYTES];
+    unsigned char precomp[crypto_box_BEFORENMBYTES];
+    unsigned char encnonce[crypto_box_NONCEBYTES];
+    unsigned char decnonce[crypto_box_NONCEBYTES];
 
     struct taia cdtaip, cdtaie;
 }
@@ -148,24 +148,24 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 {
     if (strcmp(param, "publickey") == 0)
     {
-        if (strlen(value) != crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES * 2)
+        if (strlen(value) != crypto_box_PUBLICKEYBYTES * 2)
         {
             fprintf(stderr, "Public key is incorrect length\n");
             return -1;
         }
 
-        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->publickey, value, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES);
+        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
     }
         else
     if (strcmp(param, "privatekey") == 0)
     {
-        if (strlen(value) != crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES * 2)
+        if (strlen(value) != crypto_box_SECRETKEYBYTES * 2)
         {
             fprintf(stderr, "Private key is incorrect length\n");
             return -1;
         }
 
-        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES);
+        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
     }
         else
     {
@@ -180,12 +180,12 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 {
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
-    unsigned char tempbufferinput[len + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES];
+    unsigned char tempbufferinput[len + crypto_box_ZEROBYTES];
 
-    memset(tempbufferinput, 0, crypto_box_curve25519xsalsa20poly1305_ZEROBYTES);
-    memcpy(tempbufferinput + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, input, len);
+    memset(tempbufferinput, 0, crypto_box_ZEROBYTES);
+    memcpy(tempbufferinput + crypto_box_ZEROBYTES, input, len);
 
-    len += crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
+    len += crypto_box_ZEROBYTES;
 
     taia_now(&inst->cdtaie);
 
@@ -196,7 +196,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 
     taia_pack((char *) inst->encnonce + nonceoffset, &(inst->cdtaie));
 
-    int result = crypto_box_curve25519xsalsa20poly1305_afternm(
+    int result = crypto_box_afternm(
         output,
         tempbufferinput,
         len,
@@ -217,7 +217,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 
 static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
 {
-    if (len < crypto_box_curve25519xsalsa20poly1305_ZEROBYTES)
+    if (len < crypto_box_ZEROBYTES)
     {
         fprintf(stderr, "Short packet received: %d\n", len);
         return 0;
@@ -231,9 +231,9 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     taia_unpack((char*) input, &cdtaic);
 
     memcpy(inst->decnonce + nonceoffset, input, noncelength);
-    memset(input, 0, crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES);
+    memset(input, 0, crypto_box_BOXZEROBYTES);
 
-    int result = crypto_box_curve25519xsalsa20poly1305_open_afternm(
+    int result = crypto_box_open_afternm(
         tempbufferout,
         input,
         len,
@@ -247,19 +247,19 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
     int i;
     for (i = 0; i < 5; i ++)
     {
-        if (memcmp(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, taicheck, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) == 0)
+        if (memcmp(input + crypto_box_BOXZEROBYTES, taicheck, crypto_box_NONCEBYTES) == 0)
         {
             fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
             return 0;
         }
 
-        if (memcmp(taicheck, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+        if (memcmp(taicheck, taioldest, crypto_box_NONCEBYTES) < 0)
             taioldest = taicheck;
 
         taicheck ++;
     }
 
-    if (memcmp(input + crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES, taioldest, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES) < 0)
+    if (memcmp(input + crypto_box_BOXZEROBYTES, taioldest, crypto_box_NONCEBYTES) < 0)
     {
         fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
         return 0;
@@ -273,8 +273,8 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         return 0;
     }
 
-    len -= crypto_box_curve25519xsalsa20poly1305_ZEROBYTES;
-    memcpy(output, tempbufferout + crypto_box_curve25519xsalsa20poly1305_ZEROBYTES, len);
+    len -= crypto_box_ZEROBYTES;
+    memcpy(output, tempbufferout + crypto_box_ZEROBYTES, len);
 
     return len;
 }
@@ -282,21 +282,21 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 static int proto_init(sigma_proto *instance)
 {
     sigma_proto_nacl* inst = ((sigma_proto_nacl*) instance);
-    unsigned char taipublickey[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
+    unsigned char taipublickey[crypto_box_PUBLICKEYBYTES];
 
-    crypto_box_curve25519xsalsa20poly1305_beforenm(
+    crypto_box_beforenm(
         inst->precomp,
         inst->publickey,
         inst->privatekey
     );
 
-    memset(inst->encnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-    memset(inst->decnonce, 0, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
-    tailog = calloc(10, crypto_box_curve25519xsalsa20poly1305_NONCEBYTES);
+    memset(inst->encnonce, 0, crypto_box_NONCEBYTES);
+    memset(inst->decnonce, 0, crypto_box_NONCEBYTES);
+    tailog = calloc(10, crypto_box_NONCEBYTES);
 
     crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 
-    inst->encnonce[nonceoffset - 1] = memcmp(taipublickey, inst->publickey, crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES) > 0 ? 1 : 0;
+    inst->encnonce[nonceoffset - 1] = memcmp(taipublickey, inst->publickey, crypto_box_PUBLICKEYBYTES) > 0 ? 1 : 0;
     inst->decnonce[nonceoffset - 1] = inst->encnonce[nonceoffset - 1] ? 0 : 1;
 
     return 0;

@@ -33,21 +33,21 @@
 
 int main(void)
 {
-    unsigned char pk[crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES];
-    unsigned char sk[crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES];
+    unsigned char pk[crypto_box_PUBLICKEYBYTES];
+    unsigned char sk[crypto_box_SECRETKEYBYTES];
 
-    crypto_box_curve25519xsalsa20poly1305_keypair(pk, sk);
+    crypto_box_keypair(pk, sk);
 
     unsigned int i;
 
     printf("PRIVATE KEY: ");
 
-    for (i = 0; i < crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES; i ++)
+    for (i = 0; i < crypto_box_SECRETKEYBYTES; i ++)
         printf("%02x", sk[i]);
 
     printf("\n PUBLIC KEY: ");
 
-    for (i = 0; i < crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES; i ++)
+    for (i = 0; i < crypto_box_PUBLICKEYBYTES; i ++)
         printf("%02x", pk[i]);
 
     printf("\n");

@@ -7,7 +7,7 @@ SODIUM_CPPFLAGS ?= -I/usr/local/include
 SODIUM_LDFLAGS ?= -L/usr/local/lib -lsodium
 CFLAGS ?= -O2 -fPIC -Wall -Wextra
 CPPFLAGS += $(SODIUM_CPPFLAGS)
-LDFLAGS += $(SODIUM_LDFLAGS) -pthread -ldl
+LDFLAGS += $(SODIUM_LDFLAGS) -ldl -pthread
 DYLIB_CFLAGS ?= $(CFLAGS) -shared
 
 TARGETS_OBJS = dep/ini.o main.o modules.o naclkeypair.o types.o
