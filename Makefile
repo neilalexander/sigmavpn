@@ -30,19 +30,19 @@ install: all
 	cp $(TARGETS_MODULES) $(LIBEXECDIR)
 
 proto/proto_raw.o: proto/proto_raw.c
-	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS) proto/proto_raw.c -o proto/proto_raw.o
+	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) proto/proto_raw.c -o proto/proto_raw.o $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS)
 
 proto/proto_nacl0.o: proto/proto_nacl0.c types.o
-	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS) proto/proto_nacl0.c types.o -o proto/proto_nacl0.o
+	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) proto/proto_nacl0.c types.o -o proto/proto_nacl0.o $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS)
 
 proto/proto_nacltai.o: proto/proto_nacltai.c types.o
-	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS) proto/proto_nacltai.c types.o -o proto/proto_nacltai.o
+	$(CC) $(CPPFLAGS) $(SODIUM_CPPFLAGS) proto/proto_nacltai.c types.o -o proto/proto_nacltai.o $(DYLIB_CFLAGS) $(SODIUM_LDFLAGS)
 
 intf/intf_tuntap.o: intf/intf_tuntap.c
-	$(CC) $(CPPFLAGS) $(DYLIB_CFLAGS) intf/intf_tuntap.c -o intf/intf_tuntap.o
+	$(CC) $(CPPFLAGS) intf/intf_tuntap.c -o intf/intf_tuntap.o $(DYLIB_CFLAGS)
 
 intf/intf_udp.o: intf/intf_udp.c
-	$(CC) $(CPPFLAGS) $(DYLIB_CFLAGS) intf/intf_udp.c -o intf/intf_udp.o
+	$(CC) $(CPPFLAGS) intf/intf_udp.c -o intf/intf_udp.o $(DYLIB_CFLAGS)
 
 naclkeypair: naclkeypair.o
 	$(CC) -o naclkeypair naclkeypair.o $(LDFLAGS)
