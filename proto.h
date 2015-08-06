@@ -31,5 +31,5 @@
 static int proto_init();
 static int proto_set(sigma_proto *instance, char* param, char* value);
 static int proto_reload(sigma_proto *instance);
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
+static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len);
+static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len);

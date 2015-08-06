@@ -28,6 +28,8 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <stdint.h>
+#include <string.h>
 #include <pthread.h>
 #define MAX_BUFFER_SIZE 1536
 
@@ -87,4 +89,4 @@ int runsession(sigma_session* session);
 extern sigma_proto* proto_descriptor();
 extern sigma_intf* intf_descriptor();
 
-void hex2bin(unsigned char* dest, const char* src, int count);
+size_t hex2bin(uint8_t* dest, const char* src, size_t count);

@@ -28,25 +28,29 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <stdio.h>
+#include "types.h"
 
-void hex2bin(unsigned char* dest, const char* src, int count)
+size_t hex2bin(uint8_t* dest, const char* src, size_t count)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < count; i++)
     {
         if (*src >= '0' && *src <= '9') *dest = *src - '0';
         else if (*src >= 'a' && * src <='f') *dest = *src - 'a' + 10;
         else if (*src >= 'A' && * src <='F') *dest = *src - 'A' + 10;
+        else break;
 
         src++; *dest = *dest << 4;
 
         if (*src >= '0' && *src <= '9') *dest += *src - '0';
         else if (*src >= 'a' && *src <= 'f') *dest += *src - 'a' + 10;
         else if (*src >= 'A' && *src <= 'F') *dest += *src - 'A' + 10;
+        else break;
 
         src++; dest++;
     }
+
+    return i;
 }
 

@@ -35,7 +35,7 @@
 #include "../types.h"
 #include "../proto.h"
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if (instance->state == 1)
     {
@@ -46,7 +46,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
     return -1;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if (instance->state == 1)
     {
