@@ -56,7 +56,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
     if (strcmp(param, "publickey") == 0)
     {
         size_t read = hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
-        if (read != crypto_box_PUBLICKEYBYTES || value[read] != '\0')
+        if (read != crypto_box_PUBLICKEYBYTES || value[crypto_box_PUBLICKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Public key is incorrect length\n");
             return -1;
@@ -66,7 +66,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
     if (strcmp(param, "privatekey") == 0)
     {
         size_t read = hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
-        if (read != crypto_box_SECRETKEYBYTES || value[read] != '\0')
+        if (read != crypto_box_SECRETKEYBYTES || value[crypto_box_SECRETKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Private key is incorrect length\n");
             return -1;
