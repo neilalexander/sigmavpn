@@ -41,10 +41,9 @@
 #include "../tai.h"
 #include "../pack.h"
 
-#define noncelength 16
+#define noncelength TAIA_PACK_LEN
 #define nonceoffset (crypto_box_NONCEBYTES - noncelength)
-
-struct taia *tailog;
+#define rxtaiacount 16
 
 typedef struct sigma_proto_nacl
 {
@@ -56,7 +55,8 @@ typedef struct sigma_proto_nacl
     uint8_t encnonce[crypto_box_NONCEBYTES];
     uint8_t decnonce[crypto_box_NONCEBYTES];
 
-    struct taia cdtaip, cdtaie;
+    struct taia cdtaie;
+    uint8_t rxtaialog[rxtaiacount][TAIA_PACK_LEN];
 }
 sigma_proto_nacl;
 
@@ -133,10 +133,26 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
 
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
-    struct taia cdtaic;
-    uint8_t tempbufferout[len];
+    int i, taioldest = 0;
+    for (i = 0; i < rxtaiacount; i ++)
+    {
+        if (memcmp(input, inst->rxtaialog[i], noncelength) == 0)
+        {
+            fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %u)\n", (unsigned) len);
+            return 0;
+        }
 
-    taia_unpack(input, &cdtaic);
+        if (i != 0 && memcmp(inst->rxtaialog[i], inst->rxtaialog[taioldest], noncelength) < 0)
+            taioldest = i;
+    }
+
+    if (memcmp(input, inst->rxtaialog[taioldest], noncelength) < 0)
+    {
+        fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %u)\n", (unsigned) len);
+        return 0;
+    }
+
+    uint8_t tempbufferout[len];
 
     memcpy(inst->decnonce + nonceoffset, input, noncelength);
     bzero(input, crypto_box_BOXZEROBYTES);
@@ -149,32 +165,6 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
         inst->precomp
     );
 
-    struct taia *taicheck = &tailog[0];
-    struct taia *taioldest = tailog;
-
-    int i;
-    for (i = 0; i < 5; i ++)
-    {
-        if (memcmp(input + crypto_box_BOXZEROBYTES, taicheck, crypto_box_NONCEBYTES) == 0)
-        {
-            fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %u)\n", (unsigned) len);
-            return 0;
-        }
-
-        if (memcmp(taicheck, taioldest, crypto_box_NONCEBYTES) < 0)
-            taioldest = taicheck;
-
-        taicheck ++;
-    }
-
-    if (memcmp(input + crypto_box_BOXZEROBYTES, taioldest, crypto_box_NONCEBYTES) < 0)
-    {
-        fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %u)\n", (unsigned) len);
-        return 0;
-    }
-
-    inst->cdtaip = cdtaic;
-
     if (result)
     {
         fprintf(stderr, "Decryption failed (length %u, given result %i)\n", (unsigned) len, result);
@@ -183,6 +173,7 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
 
     len -= crypto_box_ZEROBYTES;
     memcpy(output, tempbufferout + crypto_box_ZEROBYTES, len);
+    memcpy(inst->rxtaialog[taioldest], inst->decnonce + nonceoffset, noncelength);
 
     return len;
 }
@@ -200,7 +191,6 @@ static int proto_init(sigma_proto *instance)
 
     bzero(inst->encnonce, crypto_box_NONCEBYTES);
     bzero(inst->decnonce, crypto_box_NONCEBYTES);
-    tailog = calloc(10, crypto_box_NONCEBYTES);
 
     crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 

@@ -33,6 +33,8 @@
 
 #include <stdint.h>
 
+#define TAIA_PACK_LEN 16
+
 struct taia
 {
     uint64_t sec;
