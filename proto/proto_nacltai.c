@@ -45,7 +45,6 @@
 #define nonceoffset (crypto_box_NONCEBYTES - noncelength)
 
 struct taia *tailog;
-struct taia lasttai;
 
 typedef struct sigma_proto_nacl
 {
@@ -103,12 +102,6 @@ static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
     len += crypto_box_ZEROBYTES;
 
     taia_now(&inst->cdtaie);
-
-    if (memcmp(&inst->cdtaie, &lasttai, sizeof(struct taia)) == 0)
-        inst->cdtaie.atto ++;
-
-    memcpy(&lasttai, &inst->cdtaie, sizeof(struct taia));
-
     taia_pack(inst->encnonce + nonceoffset, &(inst->cdtaie));
 
     int result = crypto_box_afternm(
