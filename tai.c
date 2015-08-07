@@ -49,7 +49,7 @@ void taia_unpack(const uint8_t *s, struct taia *t)
 
 void taia_now(struct taia *t)
 {
-    static pthread_spinlock_t update_lock = PTHREAD_SPINLOCK_INITIALIZER;
+    static pthread_spinlock_t update_lock = { 0 };
     static struct timespec last = { 0, 0 };
     static uint32_t attos = 0;
 
