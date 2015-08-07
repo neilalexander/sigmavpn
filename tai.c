@@ -30,7 +30,7 @@
 
 #include "tai.h"
 #include "pack.h"
-#include <sys/time.h>
+#include <time.h>
 
 void taia_pack(uint8_t *s, const struct taia *t)
 {
