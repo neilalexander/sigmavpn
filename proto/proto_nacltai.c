@@ -34,26 +34,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <sodium.h>
 
 #include "../types.h"
 #include "../proto.h"
+#include "../tai.h"
+#include "../pack.h"
 
 #define noncelength 16
 #define nonceoffset (crypto_box_NONCEBYTES - noncelength)
-
-struct tai
-{
-    uint64_t x;
-};
-
-struct taia
-{
-    struct tai sec;
-    unsigned long nano;
-    unsigned long atto;
-};
 
 struct taia *tailog;
 struct taia lasttai;
@@ -71,75 +60,6 @@ typedef struct sigma_proto_nacl
     struct taia cdtaip, cdtaie;
 }
 sigma_proto_nacl;
-
-void tai_pack(uint8_t *s, struct tai *t)
-{
-    uint64_t x = t->x;
-    s[7] = x >>  0;
-    s[6] = x >>  8;
-    s[5] = x >> 16;
-    s[4] = x >> 24;
-    s[3] = x >> 32;
-    s[2] = x >> 40;
-    s[1] = x >> 48;
-    s[0] = x >> 56;
-}
-
-void tai_unpack(const uint8_t *s, struct tai *t)
-{
-    t->x =
-        (uint64_t) s[0] <<  0 |
-        (uint64_t) s[1] <<  8 |
-        (uint64_t) s[2] << 16 |
-        (uint64_t) s[3] << 24 |
-        (uint64_t) s[4] << 32 |
-        (uint64_t) s[5] << 40 |
-        (uint64_t) s[6] << 48 |
-        (uint64_t) s[7] << 56;
-}
-
-void taia_pack(uint8_t *s, struct taia *t)
-{
-    unsigned long x;
-    tai_pack(s, &t->sec);
-    s += 8;
-    x = t->atto;
-    s[7] = x & 255; x >>= 8;
-    s[6] = x & 255; x >>= 8;
-    s[5] = x & 255; x >>= 8;
-    s[4] = x;
-    x = t->nano;
-    s[3] = x & 255; x >>= 8;
-    s[2] = x & 255; x >>= 8;
-    s[1] = x & 255; x >>= 8;
-    s[0] = x;
-}
-
-void taia_unpack(uint8_t *s, struct taia *t)
-{
-    unsigned long x;
-    tai_unpack(s, &t->sec);
-    s += 8;
-    x = (uint8_t) s[4];
-    x <<= 8; x += (uint8_t) s[5];
-    x <<= 8; x += (uint8_t) s[6];
-    x <<= 8; x += (uint8_t) s[7];
-    t->atto = x;
-    x = (uint8_t) s[0];
-    x <<= 8; x += (uint8_t) s[1];
-    x <<= 8; x += (uint8_t) s[2];
-    x <<= 8; x += (uint8_t) s[3];
-    t->nano = x;
-}
-
-void taia_now(struct taia *t)
-{
-    struct timeval now;
-    gettimeofday(&now, (struct timezone *) 0);
-    t->sec.x = 4611686018427387914ULL + (uint64_t) now.tv_sec;
-    t->nano = 1000 * now.tv_usec + 500;
-    t->atto++;
-}
 
 static int proto_set(sigma_proto* instance, char* param, char* value)
 {

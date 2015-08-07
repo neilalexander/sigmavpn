@@ -38,6 +38,7 @@
 
 #include "../types.h"
 #include "../proto.h"
+#include "../pack.h"
 
 uint8_t n[crypto_box_NONCEBYTES];
 

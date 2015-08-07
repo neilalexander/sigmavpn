@@ -1,6 +1,6 @@
 //
-//  types.c
-//  Sigma type code
+//  tai.h
+//  tai/taia functions
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
@@ -28,29 +28,20 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "types.h"
+#ifndef Sigma_proto_tai_h
+#define Sigma_proto_tai_h
 
-size_t hex2bin(uint8_t* dest, const char* src, size_t count)
+#include <stdint.h>
+
+struct taia
 {
-    size_t i;
+    uint64_t sec;
+	uint32_t nano;
+	uint32_t atto;
+};
 
-    for (i = 0; i < count; i++)
-    {
-        if (*src >= '0' && *src <= '9') *dest = *src - '0';
-        else if (*src >= 'a' && * src <='f') *dest = *src - 'a' + 10;
-        else if (*src >= 'A' && * src <='F') *dest = *src - 'A' + 10;
-        else break;
+void taia_pack(uint8_t *s, const struct taia *t);
+void taia_unpack(const uint8_t *s, struct taia *t);
+void taia_now(struct taia *t);
 
-        src++; *dest = *dest << 4;
-
-        if (*src >= '0' && *src <= '9') *dest += *src - '0';
-        else if (*src >= 'a' && *src <= 'f') *dest += *src - 'a' + 10;
-        else if (*src >= 'A' && *src <= 'F') *dest += *src - 'A' + 10;
-        else break;
-
-        src++; dest++;
-    }
-
-    return i;
-}
-
+#endif

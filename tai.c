@@ -1,6 +1,6 @@
 //
-//  types.h
-//  Sigma type headers
+//  tai.c
+//  tai/taia functions
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
@@ -28,68 +28,29 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef Sigma_types_h
-#define Sigma_types_h
+#include "tai.h"
+#include "pack.h"
+#include <sys/time.h>
 
-#include <stdint.h>
-#include <string.h>
-#include <pthread.h>
-#define MAX_BUFFER_SIZE 1536
-
-typedef struct sigma_conf
+void taia_pack(uint8_t *s, const struct taia *t)
 {
-    char modulepath[4096];
-    char configfile[4096];
+	u64_pack(s, t->sec);
+	u32_pack(s + 8, t->nano);
+	u32_pack(s + 12, t->atto);
 }
-sigma_conf;
 
-sigma_conf* conf;
-
-typedef struct sigma_intf
+void taia_unpack(const uint8_t *s, struct taia *t)
 {
-    int state;
-
-    int (*init) ();
-    int (*set) ();
-    long (*read) ();
-    long (*write) ();
-    void (*updateremote) ();
-    int (*reload) ();
-
-    int filedesc;
+	t->sec = u64_unpack(s);
+	t->nano = u32_unpack(s + 8);
+	t->atto = u32_unpack(s + 12);
 }
-sigma_intf;
 
-typedef struct sigma_proto
+void taia_now(struct taia *t)
 {
-    int encrypted;
-    int stateful;
-    int state;
-
-    int (*init) ();
-    int (*set) ();
-    int (*encode) ();
-    int (*decode) ();
-    int (*reload) ();
+    struct timeval now;
+    gettimeofday(&now, (struct timezone *) 0);
+    t->sec = 4611686018427387914ULL + (uint64_t) now.tv_sec;
+    t->nano = 1000 * now.tv_usec + 500;
+    t->atto++;
 }
-sigma_proto;
-
-typedef struct sigma_session
-{
-    char sessionname[32];
-    sigma_proto* proto;
-    sigma_intf* local;
-    sigma_intf* remote;
-    pthread_t thread;
-    int controlpipe[2];
-    struct sigma_session* next;
-}
-sigma_session;
-
-void* sessionwrapper(void* param);
-int runsession(sigma_session* session);
-
-extern sigma_proto* proto_descriptor();
-extern sigma_intf* intf_descriptor();
-
-#endif
