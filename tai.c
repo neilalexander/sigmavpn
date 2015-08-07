@@ -34,16 +34,16 @@
 
 void taia_pack(uint8_t *s, const struct taia *t)
 {
-	u64_pack(s, t->sec);
-	u32_pack(s + 8, t->nano);
-	u32_pack(s + 12, t->atto);
+    u64_pack(s, t->sec);
+    u32_pack(s + 8, t->nano);
+    u32_pack(s + 12, t->atto);
 }
 
 void taia_unpack(const uint8_t *s, struct taia *t)
 {
-	t->sec = u64_unpack(s);
-	t->nano = u32_unpack(s + 8);
-	t->atto = u32_unpack(s + 12);
+    t->sec = u64_unpack(s);
+    t->nano = u32_unpack(s + 8);
+    t->atto = u32_unpack(s + 12);
 }
 
 void taia_now(struct taia *t)

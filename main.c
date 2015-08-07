@@ -160,7 +160,7 @@ void reload()
     while (pointer)
     {
         if (write(pointer->controlpipe[1], &buffer, 1) < 0)
-		perror("write");
+            perror("write");
 
         pointer = pointer->next;
     }

@@ -38,8 +38,8 @@
 struct taia
 {
     uint64_t sec;
-	uint32_t nano;
-	uint32_t atto;
+    uint32_t nano;
+    uint32_t atto;
 };
 
 void taia_pack(uint8_t *s, const struct taia *t);
