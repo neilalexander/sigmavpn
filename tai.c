@@ -31,6 +31,7 @@
 #include "tai.h"
 #include "pack.h"
 #include <sys/time.h>
+#include <pthread.h>
 
 void taia_pack(uint8_t *s, const struct taia *t)
 {
@@ -48,9 +49,27 @@ void taia_unpack(const uint8_t *s, struct taia *t)
 
 void taia_now(struct taia *t)
 {
-    struct timeval now;
-    gettimeofday(&now, (struct timezone *) 0);
+    static pthread_spinlock_t update_lock = PTHREAD_SPINLOCK_INITIALIZER;
+    static struct timespec last = { 0, 0 };
+    static uint32_t attos = 0;
+
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+
+    pthread_spin_lock(&update_lock);
+
+    if (
+		(now.tv_sec > last.tv_sec) ||
+		(now.tv_sec == last.tv_sec && now.tv_nsec > last.tv_nsec)
+	)
+    {
+        last = now;
+        attos = 0;
+    }
+
     t->sec = 4611686018427387914ULL + (uint64_t) now.tv_sec;
-    t->nano = 1000 * now.tv_usec + 500;
-    t->atto++;
+    t->nano = (uint32_t) now.tv_nsec;
+    t->atto = attos++;
+
+    pthread_spin_unlock(&update_lock);
 }
