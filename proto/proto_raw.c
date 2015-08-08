@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "../types.h"
 #include "../proto.h"
@@ -43,6 +44,7 @@ static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
         return len;
     }
 
+    errno = ECOMM;
     return -1;
 }
 
@@ -54,6 +56,7 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
         return len;
     }
 
+    errno = ECOMM;
     return -1;
 }
 

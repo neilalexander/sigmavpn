@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sodium.h>
+#include <errno.h>
 
 #include "../types.h"
 #include "../proto.h"
@@ -68,6 +69,7 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
         if (read != crypto_box_PUBLICKEYBYTES || value[crypto_box_PUBLICKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Public key is incorrect length\n");
+            errno = EILSEQ;
             return -1;
         }
     }
@@ -78,12 +80,14 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
         if (read != crypto_box_SECRETKEYBYTES || value[crypto_box_SECRETKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Private key is incorrect length\n");
+            errno = EILSEQ;
             return -1;
         }
     }
         else
     {
         fprintf(stderr, "Unknown attribute '%s'\n", param);
+        errno = EINVAL;
         return -1;
     }
 
@@ -112,13 +116,14 @@ static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
         ((sigma_proto_nacl*) instance)->precomp
     );
 
-    memcpy(output, inst->encnonce + nonceoffset, noncelength);
-
     if (result)
     {
         fprintf(stderr, "Encryption failed (length %u, given result %i)\n", (unsigned) len, result);
+        errno = EINVAL;
         return -1;
     }
+
+    memcpy(output, inst->encnonce + nonceoffset, noncelength);
 
     return len;
 }
@@ -128,7 +133,8 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
     if (len < crypto_box_ZEROBYTES)
     {
         fprintf(stderr, "Short packet received: %u\n", (unsigned) len);
-        return 0;
+        errno = EINVAL;
+        return -1;
     }
 
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
@@ -139,7 +145,8 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
         if (memcmp(input, inst->rxtaialog[i], noncelength) == 0)
         {
             fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %u)\n", (unsigned) len);
-            return 0;
+            errno = EINVAL;
+            return -1;
         }
 
         if (i != 0 && memcmp(inst->rxtaialog[i], inst->rxtaialog[taioldest], noncelength) < 0)
@@ -149,7 +156,8 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
     if (memcmp(input, inst->rxtaialog[taioldest], noncelength) < 0)
     {
         fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %u)\n", (unsigned) len);
-        return 0;
+        errno = EINVAL;
+        return -1;
     }
 
     uint8_t tempbufferout[len];
@@ -168,7 +176,8 @@ static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, 
     if (result)
     {
         fprintf(stderr, "Decryption failed (length %u, given result %i)\n", (unsigned) len, result);
-        return 0;
+        errno = EINVAL;
+        return -1;
     }
 
     len -= crypto_box_ZEROBYTES;
