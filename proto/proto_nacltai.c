@@ -37,7 +37,6 @@
 #include <sodium.h>
 #include <errno.h>
 
-#include "../types.h"
 #include "../proto.h"
 #include "../tai.h"
 #include "../pack.h"
@@ -218,8 +217,8 @@ extern sigma_proto* proto_descriptor()
 {
     sigma_proto_nacl* proto_nacltai = calloc(1, sizeof(sigma_proto_nacl));
 
-    proto_nacltai->baseproto.encrypted = 1;
-    proto_nacltai->baseproto.stateful = 0;
+    proto_nacltai->baseproto.encrypted = true;
+    proto_nacltai->baseproto.stateful = false;
     proto_nacltai->baseproto.init = proto_init;
     proto_nacltai->baseproto.encode = proto_encode;
     proto_nacltai->baseproto.decode = proto_decode;

@@ -32,9 +32,13 @@
 #define Sigma_types_h
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
 #define MAX_BUFFER_SIZE 1536
+
+#include "proto.h"
+#include "intf.h"
 
 typedef struct sigma_conf
 {
@@ -44,35 +48,6 @@ typedef struct sigma_conf
 sigma_conf;
 
 sigma_conf* conf;
-
-typedef struct sigma_intf
-{
-    int state;
-
-    int (*init) ();
-    int (*set) ();
-    long (*read) ();
-    long (*write) ();
-    void (*updateremote) ();
-    int (*reload) ();
-
-    int filedesc;
-}
-sigma_intf;
-
-typedef struct sigma_proto
-{
-    int encrypted;
-    int stateful;
-    int state;
-
-    int (*init) ();
-    int (*set) ();
-    int (*encode) ();
-    int (*decode) ();
-    int (*reload) ();
-}
-sigma_proto;
 
 typedef struct sigma_session
 {
@@ -88,8 +63,5 @@ sigma_session;
 
 void* sessionwrapper(void* param);
 int runsession(sigma_session* session);
-
-extern sigma_proto* proto_descriptor();
-extern sigma_intf* intf_descriptor();
 
 #endif

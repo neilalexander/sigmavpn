@@ -40,7 +40,6 @@
 #include <netdb.h>
 #include <errno.h>
 
-#include "../types.h"
 #include "../intf.h"
 
 typedef union
@@ -64,7 +63,7 @@ typedef struct sigma_intf_udp
 }
 sigma_intf_udp;
 
-static long intf_write(sigma_intf *instance, char* input, long len)
+static ssize_t intf_write(sigma_intf *instance, const uint8_t* input, size_t len)
 {
     sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 
@@ -88,7 +87,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
     return ret;
 }
 
-static long intf_read(sigma_intf *instance, char* output, long len)
+static ssize_t intf_read(sigma_intf *instance, uint8_t* output, size_t len)
 {
     sigma_intf_udp* udp = (sigma_intf_udp*) instance;
 

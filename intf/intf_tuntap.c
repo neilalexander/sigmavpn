@@ -35,7 +35,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#include "../types.h"
 #include "../intf.h"
 
 #ifdef linux
@@ -52,12 +51,10 @@ typedef struct sigma_intf_tuntap
     char nodename[16];
     int tunmode;
     int protocolinfo;
-
-    long buffersize;
 }
 sigma_intf_tuntap;
 
-static long intf_write(sigma_intf *instance, char* input, long len)
+static ssize_t intf_write(sigma_intf *instance, const uint8_t* input, size_t len)
 {
     sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 
@@ -67,7 +64,7 @@ static long intf_write(sigma_intf *instance, char* input, long len)
     return write(tuntap->baseintf.filedesc, input, len);
 }
 
-static long intf_read(sigma_intf *instance, char* output, long len)
+static ssize_t intf_read(sigma_intf *instance, uint8_t* output, size_t len)
 {
     sigma_intf_tuntap* tuntap = (sigma_intf_tuntap*) instance;
 
@@ -164,7 +161,7 @@ extern sigma_intf* intf_descriptor()
     intf_tuntap->baseintf.write = intf_write;
     intf_tuntap->baseintf.set = intf_set;
     intf_tuntap->baseintf.reload = intf_reload;
-    intf_tuntap->baseintf.updateremote = 0;
+    intf_tuntap->baseintf.updateremote = NULL;
 
     return (sigma_intf*) intf_tuntap;
 }

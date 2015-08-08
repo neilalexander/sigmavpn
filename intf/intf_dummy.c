@@ -31,7 +31,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../types.h"
 #include "../intf.h"
 
 static long intf_write(sigma_intf *instance, char* input, long len)
