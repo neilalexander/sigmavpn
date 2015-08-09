@@ -34,167 +34,78 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <sodium.h>
+#include <errno.h>
 
-#include "../types.h"
 #include "../proto.h"
+#include "../tai.h"
+#include "../pack.h"
 
-#define uint64 unsigned long long
-#define noncelength 16
+#define noncelength TAIA_PACK_LEN
 #define nonceoffset (crypto_box_NONCEBYTES - noncelength)
-
-struct tai
-{
-    uint64 x;
-};
-
-struct taia
-{
-    struct tai sec;
-    unsigned long nano;
-    unsigned long atto;
-};
-
-struct taia *tailog;
-struct taia lasttai;
+#define rxtaiacount 16
 
 typedef struct sigma_proto_nacl
 {
     sigma_proto baseproto;
 
-    unsigned char privatekey[crypto_box_SECRETKEYBYTES];
-    unsigned char publickey[crypto_box_PUBLICKEYBYTES];
-    unsigned char precomp[crypto_box_BEFORENMBYTES];
-    unsigned char encnonce[crypto_box_NONCEBYTES];
-    unsigned char decnonce[crypto_box_NONCEBYTES];
+    uint8_t privatekey[crypto_box_SECRETKEYBYTES];
+    uint8_t publickey[crypto_box_PUBLICKEYBYTES];
+    uint8_t precomp[crypto_box_BEFORENMBYTES];
+    uint8_t encnonce[crypto_box_NONCEBYTES];
+    uint8_t decnonce[crypto_box_NONCEBYTES];
 
-    struct taia cdtaip, cdtaie;
+    struct taia cdtaie;
+    uint8_t rxtaialog[rxtaiacount][TAIA_PACK_LEN];
 }
 sigma_proto_nacl;
-
-void tai_pack(char *s, struct tai *t)
-{
-    uint64 x;
-    x = t->x;
-    s[7] = x & 255; x >>= 8;
-    s[6] = x & 255; x >>= 8;
-    s[5] = x & 255; x >>= 8;
-    s[4] = x & 255; x >>= 8;
-    s[3] = x & 255; x >>= 8;
-    s[2] = x & 255; x >>= 8;
-    s[1] = x & 255; x >>= 8;
-    s[0] = x;
-}
-
-void tai_unpack(char *s, struct tai *t)
-{
-    uint64 x;
-    x = (unsigned char) s[0];
-    x <<= 8; x += (unsigned char) s[1];
-    x <<= 8; x += (unsigned char) s[2];
-    x <<= 8; x += (unsigned char) s[3];
-    x <<= 8; x += (unsigned char) s[4];
-    x <<= 8; x += (unsigned char) s[5];
-    x <<= 8; x += (unsigned char) s[6];
-    x <<= 8; x += (unsigned char) s[7];
-    t->x = x;
-}
-
-void taia_pack(char *s, struct taia *t)
-{
-    unsigned long x;
-    tai_pack(s, &t->sec);
-    s += 8;
-    x = t->atto;
-    s[7] = x & 255; x >>= 8;
-    s[6] = x & 255; x >>= 8;
-    s[5] = x & 255; x >>= 8;
-    s[4] = x;
-    x = t->nano;
-    s[3] = x & 255; x >>= 8;
-    s[2] = x & 255; x >>= 8;
-    s[1] = x & 255; x >>= 8;
-    s[0] = x;
-}
-
-void taia_unpack(char *s, struct taia *t)
-{
-    unsigned long x;
-    tai_unpack(s, &t->sec);
-    s += 8;
-    x = (unsigned char) s[4];
-    x <<= 8; x += (unsigned char) s[5];
-    x <<= 8; x += (unsigned char) s[6];
-    x <<= 8; x += (unsigned char) s[7];
-    t->atto = x;
-    x = (unsigned char) s[0];
-    x <<= 8; x += (unsigned char) s[1];
-    x <<= 8; x += (unsigned char) s[2];
-    x <<= 8; x += (unsigned char) s[3];
-    t->nano = x;
-}
-
-void taia_now(struct taia *t)
-{
-    struct timeval now;
-    gettimeofday(&now, (struct timezone *) 0);
-    t->sec.x = 4611686018427387914ULL + (uint64) now.tv_sec;
-    t->nano = 1000 * now.tv_usec + 500;
-    t->atto++;
-}
 
 static int proto_set(sigma_proto* instance, char* param, char* value)
 {
     if (strcmp(param, "publickey") == 0)
     {
-        if (strlen(value) != crypto_box_PUBLICKEYBYTES * 2)
+        size_t read = hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
+        if (read != crypto_box_PUBLICKEYBYTES || value[crypto_box_PUBLICKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Public key is incorrect length\n");
+            errno = EILSEQ;
             return -1;
         }
-
-        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
     }
         else
     if (strcmp(param, "privatekey") == 0)
     {
-        if (strlen(value) != crypto_box_SECRETKEYBYTES * 2)
+        size_t read = hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
+        if (read != crypto_box_SECRETKEYBYTES || value[crypto_box_SECRETKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Private key is incorrect length\n");
+            errno = EILSEQ;
             return -1;
         }
-
-        hex2bin((unsigned char *) ((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
     }
         else
     {
         fprintf(stderr, "Unknown attribute '%s'\n", param);
+        errno = EINVAL;
         return -1;
     }
 
     return 0;
 }
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
-    unsigned char tempbufferinput[len + crypto_box_ZEROBYTES];
+    uint8_t tempbufferinput[len + crypto_box_ZEROBYTES];
 
-    memset(tempbufferinput, 0, crypto_box_ZEROBYTES);
+    bzero(tempbufferinput, crypto_box_ZEROBYTES);
     memcpy(tempbufferinput + crypto_box_ZEROBYTES, input, len);
 
     len += crypto_box_ZEROBYTES;
 
     taia_now(&inst->cdtaie);
-
-    if (memcmp(&inst->cdtaie, &lasttai, sizeof(struct taia)) == 0)
-        inst->cdtaie.atto ++;
-
-    memcpy(&lasttai, &inst->cdtaie, sizeof(struct taia));
-
-    taia_pack((char *) inst->encnonce + nonceoffset, &(inst->cdtaie));
+    taia_pack(inst->encnonce + nonceoffset, &(inst->cdtaie));
 
     int result = crypto_box_afternm(
         output,
@@ -204,34 +115,54 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
         ((sigma_proto_nacl*) instance)->precomp
     );
 
-    memcpy(output, inst->encnonce + nonceoffset, noncelength);
-
     if (result)
     {
-        fprintf(stderr, "Encryption failed (length %i, given result %i)\n", len, result);
+        fprintf(stderr, "Encryption failed (length %u, given result %i)\n", (unsigned) len, result);
+        errno = EINVAL;
         return -1;
     }
+
+    memcpy(output, inst->encnonce + nonceoffset, noncelength);
 
     return len;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if (len < crypto_box_ZEROBYTES)
     {
-        fprintf(stderr, "Short packet received: %d\n", len);
-        return 0;
+        fprintf(stderr, "Short packet received: %u\n", (unsigned) len);
+        errno = EINVAL;
+        return -1;
     }
 
     sigma_proto_nacl* inst = (sigma_proto_nacl*) instance;
 
-    struct taia cdtaic;
-    unsigned char tempbufferout[len];
+    int i, taioldest = 0;
+    for (i = 0; i < rxtaiacount; i ++)
+    {
+        if (memcmp(input, inst->rxtaialog[i], noncelength) == 0)
+        {
+            fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %u)\n", (unsigned) len);
+            errno = EINVAL;
+            return -1;
+        }
 
-    taia_unpack((char*) input, &cdtaic);
+        if (i != 0 && memcmp(inst->rxtaialog[i], inst->rxtaialog[taioldest], noncelength) < 0)
+            taioldest = i;
+    }
+
+    if (memcmp(input, inst->rxtaialog[taioldest], noncelength) < 0)
+    {
+        fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %u)\n", (unsigned) len);
+        errno = EINVAL;
+        return -1;
+    }
+
+    uint8_t tempbufferout[len];
 
     memcpy(inst->decnonce + nonceoffset, input, noncelength);
-    memset(input, 0, crypto_box_BOXZEROBYTES);
+    bzero(input, crypto_box_BOXZEROBYTES);
 
     int result = crypto_box_open_afternm(
         tempbufferout,
@@ -241,40 +172,16 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         inst->precomp
     );
 
-    struct taia *taicheck = &tailog[0];
-    struct taia *taioldest = tailog;
-
-    int i;
-    for (i = 0; i < 5; i ++)
-    {
-        if (memcmp(input + crypto_box_BOXZEROBYTES, taicheck, crypto_box_NONCEBYTES) == 0)
-        {
-            fprintf(stderr, "Timestamp reuse detected, possible replay attack (packet length %i)\n", len);
-            return 0;
-        }
-
-        if (memcmp(taicheck, taioldest, crypto_box_NONCEBYTES) < 0)
-            taioldest = taicheck;
-
-        taicheck ++;
-    }
-
-    if (memcmp(input + crypto_box_BOXZEROBYTES, taioldest, crypto_box_NONCEBYTES) < 0)
-    {
-        fprintf(stderr, "Timestamp older than our oldest known timestamp, possible replay attack (packet length %i)\n", len);
-        return 0;
-    }
-
-    inst->cdtaip = cdtaic;
-
     if (result)
     {
-        fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
-        return 0;
+        fprintf(stderr, "Decryption failed (length %u, given result %i)\n", (unsigned) len, result);
+        errno = EINVAL;
+        return -1;
     }
 
     len -= crypto_box_ZEROBYTES;
     memcpy(output, tempbufferout + crypto_box_ZEROBYTES, len);
+    memcpy(inst->rxtaialog[taioldest], inst->decnonce + nonceoffset, noncelength);
 
     return len;
 }
@@ -282,7 +189,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 static int proto_init(sigma_proto *instance)
 {
     sigma_proto_nacl* inst = ((sigma_proto_nacl*) instance);
-    unsigned char taipublickey[crypto_box_PUBLICKEYBYTES];
+    uint8_t taipublickey[crypto_box_PUBLICKEYBYTES];
 
     crypto_box_beforenm(
         inst->precomp,
@@ -290,9 +197,8 @@ static int proto_init(sigma_proto *instance)
         inst->privatekey
     );
 
-    memset(inst->encnonce, 0, crypto_box_NONCEBYTES);
-    memset(inst->decnonce, 0, crypto_box_NONCEBYTES);
-    tailog = calloc(10, crypto_box_NONCEBYTES);
+    bzero(inst->encnonce, crypto_box_NONCEBYTES);
+    bzero(inst->decnonce, crypto_box_NONCEBYTES);
 
     crypto_scalarmult_curve25519_base(taipublickey, inst->privatekey);
 
@@ -311,8 +217,8 @@ extern sigma_proto* proto_descriptor()
 {
     sigma_proto_nacl* proto_nacltai = calloc(1, sizeof(sigma_proto_nacl));
 
-    proto_nacltai->baseproto.encrypted = 1;
-    proto_nacltai->baseproto.stateful = 0;
+    proto_nacltai->baseproto.encrypted = true;
+    proto_nacltai->baseproto.stateful = false;
     proto_nacltai->baseproto.init = proto_init;
     proto_nacltai->baseproto.encode = proto_encode;
     proto_nacltai->baseproto.decode = proto_decode;

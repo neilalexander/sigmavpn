@@ -160,7 +160,7 @@ void reload()
     while (pointer)
     {
         if (write(pointer->controlpipe[1], &buffer, 1) < 0)
-		perror("write");
+            perror("write");
 
         pointer = pointer->next;
     }
@@ -415,7 +415,7 @@ int runsession(sigma_session* session)
 
             if (readvalue < 0)
             {
-                fprintf(stderr, "%s: Local read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+                fprintf(stderr, "%s: Local encode error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
                 return -1;
             }
 
@@ -423,8 +423,13 @@ int runsession(sigma_session* session)
 
             if (writevalue < 0)
             {
-                fprintf(stderr, "%s: Local write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
-                return -1;
+                if (errno != EINVAL)
+                {
+                    fprintf(stderr, "%s: Local write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
+                    return -1;
+                }
+
+                fprintf(stderr, "%s: Could not send packet with length %u on remote interface\n", session->sessionname, (unsigned) readvalue);
             }
         }
 
@@ -443,22 +448,32 @@ int runsession(sigma_session* session)
 
             if (readvalue < 0)
             {
-                fprintf(stderr, "%s: Remote read error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
-                return -1;
-            }
+                if (errno != EINVAL)
+                {
+                    fprintf(stderr, "%s: Fatal remote decode error %ld: %s\n", session->sessionname, readvalue, strerror(errno));
+                    return -1;
+                }
 
-            long writevalue = session->local->write(session->local, udpbuf, readvalue);
+                fprintf(stderr, "%s: Received invalid packet\n", session->sessionname);
+            } else {
+                long writevalue = session->local->write(session->local, udpbuf, readvalue);
 
-            if (writevalue < 0)
-            {
-                fprintf(stderr, "%s: Remote write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
-                return -1;
-            }
+                if (writevalue < 0)
+                {
+                    if (errno != EINVAL)
+                    {
+                        fprintf(stderr, "%s: Remote write error %ld: %s\n", session->sessionname, writevalue, strerror(errno));
+                        return -1;
+                    }
 
-            if (session->remote->updateremote != NULL)
-            {
-                session->remote->updateremote(session->remote);
-            }
+                    fprintf(stderr, "%s: Could not send packet with length %u on local interface\n", session->sessionname, (unsigned) readvalue);
+                }
+
+                if (session->remote->updateremote != NULL)
+                {
+                    session->remote->updateremote(session->remote);
+                }
+			}
         }
     }
 

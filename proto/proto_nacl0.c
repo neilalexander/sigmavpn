@@ -38,16 +38,17 @@
 
 #include "../types.h"
 #include "../proto.h"
+#include "../pack.h"
 
-unsigned char n[crypto_box_NONCEBYTES];
+uint8_t n[crypto_box_NONCEBYTES];
 
 typedef struct sigma_proto_nacl
 {
     sigma_proto baseproto;
 
-    unsigned char privatekey[crypto_box_SECRETKEYBYTES];
-    unsigned char publickey[crypto_box_PUBLICKEYBYTES];
-    unsigned char precomp[crypto_box_BEFORENMBYTES];
+    uint8_t privatekey[crypto_box_SECRETKEYBYTES];
+    uint8_t publickey[crypto_box_PUBLICKEYBYTES];
+    uint8_t precomp[crypto_box_BEFORENMBYTES];
 }
 sigma_proto_nacl;
 
@@ -55,24 +56,22 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
 {
     if (strcmp(param, "publickey") == 0)
     {
-        if (strlen(value) != crypto_box_PUBLICKEYBYTES * 2)
+        size_t read = hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
+        if (read != crypto_box_PUBLICKEYBYTES || value[crypto_box_PUBLICKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Public key is incorrect length\n");
             return -1;
         }
-
-        hex2bin(((sigma_proto_nacl*) instance)->publickey, value, crypto_box_PUBLICKEYBYTES);
     }
         else
     if (strcmp(param, "privatekey") == 0)
     {
-        if (strlen(value) != crypto_box_SECRETKEYBYTES * 2)
+        size_t read = hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
+        if (read != crypto_box_SECRETKEYBYTES || value[crypto_box_SECRETKEYBYTES * 2] != '\0')
         {
             fprintf(stderr, "Private key is incorrect length\n");
             return -1;
         }
-
-        hex2bin(((sigma_proto_nacl*) instance)->privatekey, value, crypto_box_SECRETKEYBYTES);
     }
         else
     {
@@ -83,15 +82,15 @@ static int proto_set(sigma_proto* instance, char* param, char* value)
     return 0;
 }
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if ((len + crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES) > MAX_BUFFER_SIZE)
     {
-        fprintf(stderr, "Encryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len + crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES), MAX_BUFFER_SIZE);
+        fprintf(stderr, "Encryption failed (packet length %u is above MAX_BUFFER_SIZE %u)\n", (unsigned) (len + crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES), MAX_BUFFER_SIZE);
         return -1;
     }
 
-    unsigned char *tempbuffer, *tempbufferinput;
+    uint8_t *tempbuffer, *tempbufferinput;
 
     if ((tempbuffer = calloc(len + crypto_box_ZEROBYTES, 1)) == NULL) {
         perror("calloc");
@@ -115,7 +114,7 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
 
     if (result)
     {
-        fprintf(stderr, "Encryption failed (length %i, given result %i)\n", len, result);
+        fprintf(stderr, "Encryption failed (length %u, given result %i)\n", (unsigned) len, result);
         free(tempbuffer);
         free(tempbufferinput);
         return -1;
@@ -128,21 +127,21 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
     return len + crypto_box_ZEROBYTES - crypto_box_BOXZEROBYTES;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if ((len - crypto_box_BOXZEROBYTES) > MAX_BUFFER_SIZE)
     {
-        fprintf(stderr, "Decryption failed (packet length %i is above MAX_BUFFER_SIZE %i)\n", (len - crypto_box_BOXZEROBYTES), MAX_BUFFER_SIZE);
+        fprintf(stderr, "Decryption failed (packet length %u is above MAX_BUFFER_SIZE %u)\n", (unsigned) (len - crypto_box_BOXZEROBYTES), MAX_BUFFER_SIZE);
         return 0;
     }
 
     if (len < crypto_box_BOXZEROBYTES)
     {
-        fprintf(stderr, "Short packet received: %d\n", len);
+        fprintf(stderr, "Short packet received: %u\n", (unsigned) len);
         return 0;
     }
 
-    unsigned char *tempbuffer, *tempbufferout;
+    uint8_t *tempbuffer, *tempbufferout;
 
     if ((tempbuffer = calloc(len + crypto_box_BOXZEROBYTES, 1)) == NULL) {
         perror("calloc");
@@ -166,7 +165,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
 
     if (result)
     {
-        fprintf(stderr, "Decryption failed (length %i, given result %i)\n", len, result);
+        fprintf(stderr, "Decryption failed (length %u, given result %i)\n", (unsigned) len, result);
         free(tempbuffer);
         free(tempbufferout);
         return 0;

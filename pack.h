@@ -1,6 +1,6 @@
 //
-//  types.c
-//  Sigma type code
+//  pack.h
+//  Auxiliary functions to parse, pack and unpack binary types
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
@@ -28,25 +28,18 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <stdio.h>
+#ifndef Sigma_pack_h
+#define Sigma_pack_h
 
-void hex2bin(unsigned char* dest, const char* src, int count)
-{
-    int i;
+#include <stdint.h>
+#include <string.h>
 
-    for (i = 0; i < count; i++)
-    {
-        if (*src >= '0' && *src <= '9') *dest = *src - '0';
-        else if (*src >= 'a' && * src <='f') *dest = *src - 'a' + 10;
-        else if (*src >= 'A' && * src <='F') *dest = *src - 'A' + 10;
+size_t hex2bin(uint8_t* dest, const char* src, size_t count);
 
-        src++; *dest = *dest << 4;
+void u32_pack(uint8_t * buf, uint32_t val);
+uint32_t u32_unpack(const uint8_t * buf);
 
-        if (*src >= '0' && *src <= '9') *dest += *src - '0';
-        else if (*src >= 'a' && *src <= 'f') *dest += *src - 'a' + 10;
-        else if (*src >= 'A' && *src <= 'F') *dest += *src - 'A' + 10;
+void u64_pack(uint8_t * buf, uint64_t val);
+uint64_t u64_unpack(const uint8_t * buf);
 
-        src++; dest++;
-    }
-}
-
+#endif

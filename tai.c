@@ -1,6 +1,6 @@
 //
-//  types.h
-//  Sigma type headers
+//  tai.c
+//  tai/taia functions
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
@@ -28,40 +28,38 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef Sigma_types_h
-#define Sigma_types_h
+#include "tai.h"
+#include "pack.h"
+#include <time.h>
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <pthread.h>
-#define MAX_BUFFER_SIZE 1536
-
-#include "proto.h"
-#include "intf.h"
-
-typedef struct sigma_conf
+void taia_pack(uint8_t *s, const struct taia *t)
 {
-    char modulepath[4096];
-    char configfile[4096];
+    u64_pack(s, t->sec);
+    u32_pack(s + 8, t->nano);
+    u32_pack(s + 12, t->atto);
 }
-sigma_conf;
 
-sigma_conf* conf;
-
-typedef struct sigma_session
+void taia_unpack(const uint8_t *s, struct taia *t)
 {
-    char sessionname[32];
-    sigma_proto* proto;
-    sigma_intf* local;
-    sigma_intf* remote;
-    pthread_t thread;
-    int controlpipe[2];
-    struct sigma_session* next;
+    t->sec = u64_unpack(s);
+    t->nano = u32_unpack(s + 8);
+    t->atto = u32_unpack(s + 12);
 }
-sigma_session;
 
-void* sessionwrapper(void* param);
-int runsession(sigma_session* session);
+void taia_now(struct taia *t)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
 
-#endif
+    uint64_t abssec = 4611686018427387914ULL + (uint64_t) now.tv_sec;
+    if (t->sec == abssec && t->nano == (uint32_t) now.tv_nsec)
+    {
+        t->atto++;
+    }
+    else
+    {
+        t->sec = abssec;
+        t->nano = now.tv_nsec;
+        t->atto = 0;
+    }
+}

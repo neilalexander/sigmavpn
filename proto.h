@@ -28,8 +28,27 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-static int proto_init();
-static int proto_set(sigma_proto *instance, char* param, char* value);
-static int proto_reload(sigma_proto *instance);
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len);
+#ifndef Sigma_proto_h
+#define Sigma_proto_h
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <unistd.h>
+
+typedef struct sigma_proto
+{
+    bool encrypted;
+    bool stateful;
+    int state;
+
+    int (*init) ();
+    int (*set) ();
+    ssize_t (*encode) ();
+    ssize_t (*decode) ();
+    int (*reload) ();
+}
+sigma_proto;
+
+extern sigma_proto* proto_descriptor();
+
+#endif

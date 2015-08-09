@@ -31,11 +31,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
-#include "../types.h"
 #include "../proto.h"
 
-static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_encode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if (instance->state == 1)
     {
@@ -43,10 +43,11 @@ static int proto_encode(sigma_proto *instance, unsigned char* input, unsigned ch
         return len;
     }
 
+    errno = ECOMM;
     return -1;
 }
 
-static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned char* output, unsigned int len)
+static int proto_decode(sigma_proto *instance, uint8_t* input, uint8_t* output, size_t len)
 {
     if (instance->state == 1)
     {
@@ -54,6 +55,7 @@ static int proto_decode(sigma_proto *instance, unsigned char* input, unsigned ch
         return len;
     }
 
+    errno = ECOMM;
     return -1;
 }
 
@@ -81,8 +83,8 @@ extern sigma_proto* proto_descriptor()
 {
     sigma_proto* proto_raw = calloc(1, sizeof(sigma_proto));
 
-    proto_raw->encrypted = 0;
-    proto_raw->stateful = 0;
+    proto_raw->encrypted = false;
+    proto_raw->stateful = false;
     proto_raw->init = proto_init;
     proto_raw->encode = proto_encode;
     proto_raw->decode = proto_decode;

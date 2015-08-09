@@ -1,6 +1,6 @@
 //
-//  types.h
-//  Sigma type headers
+//  tai.h
+//  tai/taia functions
 //
 //  Copyright (c) 2011, Neil Alexander T.
 //  All rights reserved.
@@ -28,40 +28,22 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef Sigma_types_h
-#define Sigma_types_h
+#ifndef Sigma_proto_tai_h
+#define Sigma_proto_tai_h
 
 #include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <pthread.h>
-#define MAX_BUFFER_SIZE 1536
 
-#include "proto.h"
-#include "intf.h"
+#define TAIA_PACK_LEN 16
 
-typedef struct sigma_conf
+struct taia
 {
-    char modulepath[4096];
-    char configfile[4096];
-}
-sigma_conf;
+    uint64_t sec;
+    uint32_t nano;
+    uint32_t atto;
+};
 
-sigma_conf* conf;
-
-typedef struct sigma_session
-{
-    char sessionname[32];
-    sigma_proto* proto;
-    sigma_intf* local;
-    sigma_intf* remote;
-    pthread_t thread;
-    int controlpipe[2];
-    struct sigma_session* next;
-}
-sigma_session;
-
-void* sessionwrapper(void* param);
-int runsession(sigma_session* session);
+void taia_pack(uint8_t *s, const struct taia *t);
+void taia_unpack(const uint8_t *s, struct taia *t);
+void taia_now(struct taia *t);
 
 #endif

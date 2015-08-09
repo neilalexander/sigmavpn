@@ -28,8 +28,27 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 //
 
-static int intf_init();
-static int intf_set(sigma_intf *instance, char* param, char* value);
-static int intf_reload(sigma_intf *instance);
-static long intf_write(sigma_intf *instance, char* input, long len);
-static long intf_read(sigma_intf *instance, char* output, long len);
+#ifndef Sigma_intf_h
+#define Sigma_intf_h
+
+#include <stdint.h>
+#include <unistd.h>
+
+typedef struct sigma_intf
+{
+    int state;
+
+    int (*init) ();
+    int (*set) ();
+    ssize_t (*read) ();
+    ssize_t (*write) ();
+    void (*updateremote) ();
+    int (*reload) ();
+
+    int filedesc;
+}
+sigma_intf;
+
+extern sigma_intf* intf_descriptor();
+
+#endif
